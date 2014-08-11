@@ -9,7 +9,7 @@
 #define SEPARATOR_LENGTH 9
 #define ZERO_LENGTH 38
 #define ONE_LENGTH 78
-#define LENGTHS_MARGIN 4
+#define LENGTHS_MARGIN 5
 
 void openFileWithTransmissionData();
 unsigned char readLevel();
@@ -19,6 +19,7 @@ void printArray();
 void decodeBitLength(int length);
 void decodeArray();
 void decodePluviometer();
+void decodeWindData();
 void printTime();
 
 char *filename;
@@ -123,7 +124,7 @@ int findEncodedBitLength(unsigned char level) {
 }
 
 void resetRecording() {
-/*   printArray(); */
+   /*printArray();*/
 
    recording = 0;
    memset(encodedBits, 2, sizeof(encodedBits[0]) * 36);
@@ -137,14 +138,14 @@ void decodeBitLength(int length) {
        if (length < ZERO_LENGTH - LENGTHS_MARGIN) {
            return;
        }
-       if (length > SYNCHRO_LENGTH - LENGTHS_MARGIN && length < SYNCHRO_LENGTH + LENGTHS_MARGIN && !recording) {
+       if (length > SYNCHRO_LENGTH - LENGTHS_MARGIN*2 && length < SYNCHRO_LENGTH + LENGTHS_MARGIN*2 && !recording) {
            resetRecording();
            recording = 1;
        } else if (length > ONE_LENGTH - LENGTHS_MARGIN && length < ONE_LENGTH + LENGTHS_MARGIN && recording) {
            encodedBits[encodedBitsIndex++] = 1;
        } else if (length > ZERO_LENGTH - LENGTHS_MARGIN && length < ZERO_LENGTH + LENGTHS_MARGIN && recording) {
            encodedBits[encodedBitsIndex++] = 0;
-       } else if (length > SYNCHRO_LENGTH - LENGTHS_MARGIN && length < SYNCHRO_LENGTH + LENGTHS_MARGIN && recording) {
+       } else if (length > SYNCHRO_LENGTH - LENGTHS_MARGIN*2 && length < SYNCHRO_LENGTH + LENGTHS_MARGIN*2 && recording) {
            decodeArray();
            resetRecording();
            recording = 1;
@@ -154,6 +155,12 @@ void decodeBitLength(int length) {
 }
 
 void printArray() {
+   if (encodedBitsIndex == 0) {
+        return;
+   }
+
+   printTime();
+
    int i = 0;
    for (i=0; i<36; i++) {
        printf("%i", encodedBits[i]);
@@ -166,6 +173,7 @@ void decodeArray() {
        return;
    }
    decodePluviometer();
+   decodeWindData();
 }
 
 void decodePluviometer() {
@@ -177,7 +185,61 @@ void decodePluviometer() {
         }
 
         printTime();
-        printf("        Deszczomierz: %.2f mm", (float)rain/4);
+        printf("Deszczomierz: %.2f mm", (float)rain/4);
+
+        if (encodedBits[8]) {
+           printf("        Bateria: do wymiany (napiecie < 2.6V)\n");
+        } else {
+           printf("        Bateria: OK\n");
+        }
+    }
+}
+
+void decodeWindData() {
+    if (encodedBits[9] && encodedBits[10] && encodedBits[12] && !encodedBits[13] && !encodedBits[14] && !encodedBits[15] && !encodedBits[16]
+           && !encodedBits[17] && !encodedBits[18] && !encodedBits[19] && !encodedBits[20] && !encodedBits[21] && !encodedBits[22] && !encodedBits[23]) {
+        unsigned int windAverageSpeed = 0;
+        int i;
+        for (i=24; i<32; i++) {
+           windAverageSpeed |= encodedBits[i] << (i - 24);
+        }
+
+        printTime();
+        printf("Srednia predkosc wiatru: %.2f m/s", (float)windAverageSpeed/5);
+
+        if (encodedBits[8]) {
+           printf("        Bateria: do wymiany (napiecie < 2.6V)\n");
+        } else {
+           printf("        Bateria: OK\n");
+        }
+    } else if (encodedBits[9] && encodedBits[10] && encodedBits[12] && encodedBits[13] && encodedBits[14]) {
+        unsigned int direction = 0;
+        unsigned int windGust = 0;
+        int i;
+        for (i=15; i<23; i++) {
+           direction |= encodedBits[i] << (i - 15);
+        }
+        for (i=24; i<32; i++) {
+           windGust |= encodedBits[i] << (i - 24);
+        }
+
+        printTime();
+        printf("Kierunek wiatru: %i stopni        Poryw: %.2f m/s", direction, (float)windGust/5);
+
+        if (encodedBits[8]) {
+           printf("        Bateria: do wymiany (napiecie < 2.6V)\n");
+        } else {
+           printf("        Bateria: OK\n");
+        }
+    } else if (!encodedBits[9] || !encodedBits[10]) {
+        unsigned int temperature = 0;
+        int i;
+        for (i=12; i<24; i++) {
+           temperature |= encodedBits[i] << (i - 12);
+        }
+
+        printTime();
+        printf("Temperatura: %.2f C", (float)temperature/10);
 
         if (encodedBits[8]) {
            printf("        Bateria: do wymiany (napiecie < 2.6V)\n");
@@ -193,7 +255,7 @@ void printTime() {
 
    t = time(NULL);
    local = localtime(&t);
-   printf("[%i-%02i-%02i %02i:%02i:%02i] ", (local->tm_year + 1900), local->tm_mon, local->tm_mday, local->tm_hour,
+   printf("[%i-%02i-%02i %02i:%02i:%02i] ", (local->tm_year + 1900), (local->tm_mon) + 1, local->tm_mday, local->tm_hour,
        local->tm_min, local->tm_sec);
 }
 
