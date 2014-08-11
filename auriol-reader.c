@@ -232,14 +232,26 @@ void decodeWindData() {
            printf("        Bateria: OK\n");
         }
     } else if (!encodedBits[9] || !encodedBits[10]) {
-        unsigned int temperature = 0;
+        int temperature = 0;
         int i;
         for (i=12; i<24; i++) {
            temperature |= encodedBits[i] << (i - 12);
         }
 
+        unsigned int humidityOnes = 0;
+        for (i=24; i<28; i++) {
+           humidityOnes |= encodedBits[i] << (i - 24);
+        }
+
+        unsigned int humidityTens = 0;
+        for (i=28; i<32; i++) {
+           humidityTens |= encodedBits[i] << (i - 28);
+        }
+
+        unsigned int humidity = humidityTens * 10 + humidityOnes;
+
         printTime();
-        printf("Temperatura: %.2f C", (float)temperature/10);
+        printf("Temperatura: %.2f C        Wilgotnosc: %i %%", (float)temperature/10, humidity);
 
         if (encodedBits[8]) {
            printf("        Bateria: do wymiany (napiecie < 2.6V)\n");
