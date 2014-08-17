@@ -10,8 +10,7 @@
 sqlite3 *conn;
 int error = 0;
 
-float pluviometerPreviousAmountInMilimeters = 0;
-int pluviometerPreviousTmMin = -1;
+float pluviometerPreviousAmountInMilimeters = -1;
 int pluviometerPreviousTmHour = -1;
 
 void initializeDatabase() {
@@ -29,12 +28,11 @@ void savePluviometer(float amountInMilimeters) {
    t = time(NULL);
    local = localtime(&t);
 
-    if (pluviometerPreviousTmMin != local->tm_min ||
-        pluviometerPreviousTmHour != local->tm_hour ||
-        pluviometerPreviousAmountInMilimeters != amountInMilimeters) {
+    if (pluviometerPreviousTmHour != local->tm_hour ||
+        pluviometerPreviousAmountInMilimeters > amountInMilimeters) {
 
         char query[1024] = " ";
-        sprintf(query, "insert into pluviometer values (datetime('now', 'localtime'), %f);", amountInMilimeters);
+        sprintf(query, "INSERT INTO pluviometer VALUES (datetime('now', 'localtime'), %f);", amountInMilimeters);
         error = sqlite3_exec(conn, query, 0, 0, 0);
 
         if (error != SQLITE_OK) {
@@ -43,7 +41,6 @@ void savePluviometer(float amountInMilimeters) {
         }
     }
 
-    pluviometerPreviousTmMin = local->tm_min;
     pluviometerPreviousTmHour = local->tm_hour;
     pluviometerPreviousAmountInMilimeters = amountInMilimeters;
 }
