@@ -3,5 +3,6 @@
 
 void initializeDatabase();
 void savePluviometer(float amountInMilimeters);
+void saveAnemometerTemperatureAndHumidity(float temperatureInC);
 
 #endif

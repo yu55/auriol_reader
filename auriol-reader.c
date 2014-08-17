@@ -242,6 +242,7 @@ void decodeWindData() {
         for (i=12; i<24; i++) {
            temperature |= encodedBits[i] << (i - 12);
         }
+        float temperatureFinal = (float)temperature/10;
 
         unsigned int humidityOnes = 0;
         for (i=24; i<28; i++) {
@@ -256,7 +257,8 @@ void decodeWindData() {
         unsigned int humidity = humidityTens * 10 + humidityOnes;
 
         printTime();
-        printf("Temperatura: %.2f C        Wilgotnosc: %i %%", (float)temperature/10, humidity);
+        printf("Temperatura: %.2f C        Wilgotnosc: %i %%", temperatureFinal, humidity);
+        saveAnemometerTemperatureAndHumidity(temperatureFinal);
 
         if (encodedBits[8]) {
            printf("        Bateria: do wymiany (napiecie < 2.6V)\n");

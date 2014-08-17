@@ -13,6 +13,9 @@ int error = 0;
 float pluviometerPreviousAmountInMilimeters = -1;
 int pluviometerPreviousTmHour = -1;
 
+float atahPreviousTemperatureInC = -1;
+int atahPreviousTmHour = -1;
+
 void initializeDatabase() {
     error = sqlite3_open(DB_FILENAME, &conn);
     if (error) {
@@ -43,4 +46,28 @@ void savePluviometer(float amountInMilimeters) {
 
     pluviometerPreviousTmHour = local->tm_hour;
     pluviometerPreviousAmountInMilimeters = amountInMilimeters;
+}
+
+void saveAnemometerTemperatureAndHumidity(float temperatureInC) {
+   struct tm *local;
+   time_t t;
+
+   t = time(NULL);
+   local = localtime(&t);
+
+    if (atahPreviousTmHour != local->tm_hour ||
+        atahPreviousTemperatureInC != temperatureInC) {
+
+        char query[1024] = " ";
+        sprintf(query, "INSERT INTO anemometer VALUES (datetime('now', 'localtime'), %f);", temperatureInC);
+        error = sqlite3_exec(conn, query, 0, 0, 0);
+
+        if (error != SQLITE_OK) {
+            puts("Something went wrong when inserting temp and humid data. Dying. Bye bye.");
+            exit(0);
+        }
+    }
+
+    atahPreviousTmHour = local->tm_hour;
+    atahPreviousTemperatureInC = temperatureInC;
 }
