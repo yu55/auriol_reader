@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <wiringPi.h>
+#include "db.h"
 
 /* #define ARRAY_SIZE 4800000 */
 #define SYNCHRO_LENGTH 178
@@ -36,6 +37,8 @@ unsigned char encodedBitsIndex = 0;
 int main(int argc, char *argv[])
 {
     filename = argv[1];
+
+    initializeDatabase();
 
 /*    unsigned char levels[ARRAY_SIZE]; */
 
@@ -185,7 +188,9 @@ void decodePluviometer() {
         }
 
         printTime();
-        printf("Deszczomierz: %.2f mm", (float)rain/4);
+        float rainFinal = (float)rain/4;
+        printf("Deszczomierz: %.2f mm", (float)rainFinal);
+        savePluviometer(rainFinal);
 
         if (encodedBits[8]) {
            printf("        Bateria: do wymiany (napiecie < 2.6V)\n");
