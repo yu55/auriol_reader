@@ -55,7 +55,7 @@ echo "<table>";
 echo "<col width=\"400\">";
 echo "<col width=\"300\">";
 
-$results = $db->query("SELECT (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-1 hour') ORDER BY created DESC LIMIT 1) - (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-1 hour') ORDER BY created ASC LIMIT 1) AS rain1h;");
+$results = $db->query("SELECT (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-118 minute') ORDER BY created DESC LIMIT 1) - (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-118 minute') ORDER BY created ASC LIMIT 1) AS rain1h;");
 while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
     $rain1h = number_format($row['rain1h'], 2);
@@ -105,7 +105,11 @@ while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 $result = $results->finalize();
 
 echo "</table>";
+
+exec('gnuplot temperature24h.plt');
 ?>
+
+<img src="tmp/output.png" alt="rain24h">
 
 </html>
 
