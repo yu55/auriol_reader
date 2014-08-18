@@ -8,19 +8,18 @@
 $db = new SQLite3('database.sl3');
 
 echo "<table>";
-echo "<col width=\"500\">";
+echo "<col width=\"400\">";
 echo "<col width=\"300\">";
 
 $results = $db->query("SELECT created, temperature FROM anemometer ORDER BY created DESC LIMIT 1;");
+$created = " ";
 while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
     $temperature = number_format($row['temperature'], 2);
+    $created = $row['created'];
     echo "<tr>";
-    echo "<td>Temperatura</td><td> <b>{$temperature} &#8451;</b></td>";
+    echo "<td>Temperatura powietrza</td><td> <b>{$temperature} &#8451;</b></td>";
     echo "</tr>";
-
-    echo "Ostatni zapis w bazie o temperaturze wykonano: <b>{$row['created']}</b>. Zapisywanie do bazy odbywa się nie rzadziej niż co godzinę.";
-
 }
 $result = $results->finalize();
 
@@ -29,7 +28,7 @@ while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
     $temperature = number_format($row['temperature'], 2);
     echo "<tr>";
-    echo "<td>Temperatura minimalna za ostatnie 24 godziny</td><td> <b>{$temperature} &#8451;</b></td>";
+    echo "<td>Minimalna temperatura powietrza za ostatnie 24 godziny</td><td> <b>{$temperature} &#8451;</b></td>";
     echo "</tr>";
 }
 $result = $results->finalize();
@@ -39,18 +38,21 @@ while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
     $temperature = number_format($row['temperature'], 2);
     echo "<tr>";
-    echo "<td>Temperatura maksymalna za ostatnie 24 godziny</td><td> <b>{$temperature} &#8451;</b></td>";
+    echo "<td>Maksymalna temperatura powietrza za ostatnie 24 godziny</td><td> <b>{$temperature} &#8451;</b></td>";
     echo "</tr>";
 }
 $result = $results->finalize();
 
+echo "<tr>";
+echo "<td>Ostatnia aktualizacja bazy danych </td><td> <b>{$created}</b></td>";
+echo "<tr>";
 
 echo "</table>";
 
 echo "<br>";
 
 echo "<table>";
-echo "<col width=\"500\">";
+echo "<col width=\"400\">";
 echo "<col width=\"300\">";
 
 $results = $db->query("SELECT (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-1 hour') ORDER BY created DESC LIMIT 1) - (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-1 hour') ORDER BY created ASC LIMIT 1) AS rain1h;");
@@ -73,6 +75,16 @@ while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 }
 $result = $results->finalize();
 
+$results = $db->query("SELECT (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-1 day') ORDER BY created DESC LIMIT 1) - (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-7 day') ORDER BY created ASC LIMIT 1) AS rain7d;");
+while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
+
+    $rain7d = number_format($row['rain7d'], 2);
+    echo "<tr>";
+    echo "<td>Opad atmosferyczny za ostatnie 7 dni</td><td> <b>{$rain7d} mm</b></td> ";
+    echo "</tr>";
+}
+$result = $results->finalize();
+
 $results = $db->query("SELECT (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-1 month') ORDER BY created DESC LIMIT 1) - (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-1 month') ORDER BY created ASC LIMIT 1) AS rain30days;");
 while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
@@ -86,7 +98,9 @@ $result = $results->finalize();
 $results = $db->query("SELECT created FROM pluviometer ORDER BY created DESC LIMIT 1;");
 while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
-    echo "Ostatni zapis w bazie o opadach wykonano: <b>{$row['created']}</b>. Zapisywanie do bazy odbywa się nie rzadziej niż co godzinę.";
+    echo "<tr>";
+    echo "<td>Ostatnia aktualizacja bazy danych</td><td> <b>{$row['created']}</b></td>";
+    echo "<tr>";
 }
 $result = $results->finalize();
 
