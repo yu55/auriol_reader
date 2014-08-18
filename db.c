@@ -32,7 +32,7 @@ void savePluviometer(float amountInMilimeters) {
    local = localtime(&t);
 
     if (pluviometerPreviousTmHour != local->tm_hour ||
-        pluviometerPreviousAmountInMilimeters > amountInMilimeters) {
+        pluviometerPreviousAmountInMilimeters < amountInMilimeters) {
 
         char query[1024] = " ";
         sprintf(query, "INSERT INTO pluviometer VALUES (datetime('now', 'localtime'), %f);", amountInMilimeters);
