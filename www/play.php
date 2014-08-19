@@ -107,9 +107,13 @@ $result = $results->finalize();
 echo "</table>";
 
 exec('gnuplot temperature24h.plt');
+
+exec('gnuplot rain30d.plt');
 ?>
 
-<img src="tmp/output.png" alt="rain24h">
+<img src="tmp/output.png" alt="temperature24h">
+<br>
+<img src="tmp/rain30d.png" alt="rain30d">
 
 </html>
 

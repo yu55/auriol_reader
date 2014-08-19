@@ -1,8 +1,8 @@
 #!/usr/local/bin/gnuplot -persist
-set terminal png size 640,480 enhanced font "Helvetica,10"
+set terminal png size 640,480 enhanced font "Helvetica,8"
 set output '/var/www/tmp/output.png'
 
-set title "Temperatura za ostanie 24 godziny"
+set title "Temperatura powietrza za ostanie 24 godziny"
 unset multiplot
 unset key
 set style data lines
