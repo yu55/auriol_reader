@@ -4,6 +4,7 @@
 #include <sqlite3.h>
 #include <string.h>
 #include <time.h>
+#include <float.h>
 
 #define DB_FILENAME "database.sl3"
 
@@ -13,7 +14,7 @@ int error = 0;
 float pluviometerPreviousAmountInMilimeters = -1;
 int pluviometerPreviousTmHour = -1;
 
-float atahPreviousTemperatureInC = -1;
+float atahPreviousTemperatureInC = -FLT_MAX;
 int atahPreviousTmHour = -1;
 
 void initializeDatabase() {
@@ -57,6 +58,12 @@ void saveAnemometerTemperatureAndHumidity(float temperatureInC) {
 
     if (atahPreviousTmHour != local->tm_hour ||
         atahPreviousTemperatureInC != temperatureInC) {
+
+        float difference = atahPreviousTemperatureInC - temperatureInC;
+        if ((difference < -10 || difference > 10) && atahPreviousTemperatureInC != -FLT_MAX) {
+            printf("WARNING! Temp jump from %f to %f too big. Temp won't be recorded!", atahPreviousTemperatureInC, temperatureInC);
+            return;
+        }
 
         char query[1024] = " ";
         sprintf(query, "INSERT INTO anemometer VALUES (datetime('now', 'localtime'), %f);", temperatureInC);
