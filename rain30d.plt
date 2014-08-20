@@ -14,6 +14,11 @@ set format x "%Y-%m-%d"
 unset mxtics
 set boxwidth 0.5 relative
 set style fill solid 1.0
+set x2tics
+set x2data time
+set format x2 "%Y-%m-%d"
+unset mx2tics
+set y2tics
 
 plot "< sqlite3 database.sl3  \"SELECT strftime('%Y-%m-%d', created) AS day,  MAX(amount)-MIN(amount) FROM pluviometer WHERE created > datetime('now','localtime','-30 day') GROUP BY day\"" using 1:2 with boxes lc rgb "blue"
 

@@ -2,13 +2,20 @@
     <head>
         <title>Sportowa8 Meteo</title>
         <meta charset="utf-8">
+        <style type='text/css'>
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 100%;
+            }
+        </style>
     </head>
-
+<body>
+<h2>Sportowa8 Meteo (stacja pogody AURIOL H13726)</h2>
 <?php
 $db = new SQLite3('database.sl3');
 
 echo "<table>";
-echo "<col width=\"400\">";
+echo "<col width=\"425\">";
 echo "<col width=\"300\">";
 
 $results = $db->query("SELECT created, temperature FROM anemometer ORDER BY created DESC LIMIT 1;");
@@ -52,7 +59,7 @@ echo "</table>";
 echo "<br>";
 
 echo "<table>";
-echo "<col width=\"400\">";
+echo "<col width=\"425\">";
 echo "<col width=\"300\">";
 
 $results = $db->query("SELECT (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-118 minute') ORDER BY created DESC LIMIT 1) - (SELECT amount FROM pluviometer WHERE created > datetime('now','localtime','-118 minute') ORDER BY created ASC LIMIT 1) AS rain1h;");
@@ -110,11 +117,12 @@ exec('gnuplot temperature24h.plt');
 
 exec('gnuplot rain30d.plt');
 ?>
-
-<img src="tmp/output.png" alt="temperature24h">
+<br>
+<img src="tmp/temperature24h.png" alt="temperature24h">
+<br>
 <br>
 <img src="tmp/rain30d.png" alt="rain30d">
-
+</body>
 </html>
 
 
