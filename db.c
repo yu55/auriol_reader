@@ -61,7 +61,7 @@ void saveAnemometerTemperatureAndHumidity(float temperatureInC) {
 
         float difference = atahPreviousTemperatureInC - temperatureInC;
         if ((difference < -10 || difference > 10) && atahPreviousTemperatureInC != -FLT_MAX) {
-            printf("WARNING! Temp jump from %f to %f too big. Temp won't be recorded!", atahPreviousTemperatureInC, temperatureInC);
+            printf("\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n", atahPreviousTemperatureInC, temperatureInC);
             return;
         }
 
