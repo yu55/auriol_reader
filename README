@@ -1,0 +1,29 @@
+Prototype web interface for AURIOL H13726 weather station on Raspberry Pi.
+-------------------------------------------------------------------------------
+Data is received via cheap chinese receiver XY-MK-5V.
+It's a prototype so repo and code is a mess. But it works :)
+You can use and do everything You want with it.
+
+auriol-reader - reads and decodes radio transmissions from pluviometer and
+anemometer devices.
+
+gpio-poller - polls GPIO and prints data to stdout
+
+db - sqlite3 data recording utility
+
+www - web page
+
+*.plt - configurations for Gnuplot
+
+and some messy scripts to keep thing working in background and start after Pi
+reboot etc, restart once a day just in case etc.
+
+This project uses Wiring Pi library (http://wiringpi.com/) so You should
+install it first.
+
+Magic spell to build this thing:
+$  gcc -Wall -ansi -o build/auriol-pluviometer-reader -I/usr/local/include
+-L/usr/local/lib -lwiringPi -lrt -lsqlite3 auriol-reader.c db.c
+
+Have a nice day :)
+
