@@ -1,12 +1,12 @@
 #!/bin/sh
 
-cd /home/pi/repositories/auriol_reader
+cd /home/pi/auriol_pluviometer_reader
 
 # Kill 1
 #screen -X -S | grep starbound kill
 
 # Kill 2
-pkill -9 auriol-reader
+pkill -9 auriol-pluviometer-reader
 
 # Change directory
 #cd /home/steam/starbound/linux64

@@ -2,7 +2,7 @@
 <pre>
 <?php
 
-$file = popen("tac /home/pi/repositories/auriol_reader/output-auriol.log",'r');
+$file = popen("tac /home/pi/auriol_pluviometer_reader/output-auriol.log",'r');
 
 while ($line = fgets($file)) {
   echo $line;

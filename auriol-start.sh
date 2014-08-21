@@ -1,6 +1,4 @@
 #!/bin/sh
 
-echo 2
-
 # Start the server again
-script -qc ./auriol-reader > output-auriol.log
+script -qc ./auriol-pluviometer-reader > output-auriol.log
