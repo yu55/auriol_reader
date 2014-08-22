@@ -10,13 +10,13 @@ set grid xtics lc rgb "#bbbbbb" lw 1 lt 0
 set datafile separator "|"
 set xdata time
 set timefmt "%Y-%m-%d"
-set format x "%Y-%m-%d"
+set format x "%m-%d"
 unset mxtics
 set boxwidth 0.5 relative
 set style fill solid 1.0
 set x2tics
 set x2data time
-set format x2 "%Y-%m-%d"
+set format x2 "%m-%d"
 unset mx2tics
 set y2tics
 
