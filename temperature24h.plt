@@ -1,5 +1,5 @@
 #!/usr/local/bin/gnuplot -persist
-set terminal png size 640,480 enhanced font "Helvetica,8"
+set terminal png size 640,240 enhanced font "Helvetica,8"
 set output '/var/www/tmp/temperature24h.png'
 
 set title "Temperatura powietrza za ostanie 24 godziny"

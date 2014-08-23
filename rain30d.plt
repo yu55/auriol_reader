@@ -1,5 +1,5 @@
 #!/usr/local/bin/gnuplot -persist
-set terminal png size 640,480 enhanced font "Helvetica,8"
+set terminal png size 640,240 enhanced font "Helvetica,8"
 set output '/var/www/tmp/rain30d.png'
 
 set title "Opady atmosferyczne za ostanie 30 dni"
