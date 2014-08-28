@@ -40,8 +40,7 @@ void savePluviometer(float amountInMilimeters) {
         error = sqlite3_exec(conn, query, 0, 0, 0);
 
         if (error != SQLITE_OK) {
-            puts("Something went wrong when inserting pluviometer data. Dying. Bye bye.");
-            exit(0);
+            printf("\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n", error);
         }
     }
 
@@ -70,8 +69,7 @@ void saveAnemometerTemperatureAndHumidity(float temperatureInC) {
         error = sqlite3_exec(conn, query, 0, 0, 0);
 
         if (error != SQLITE_OK) {
-            puts("Something went wrong when inserting temp and humid data. Dying. Bye bye.");
-            exit(0);
+            printf("\nSomething went wrong when inserting temperature into DB. Error code: %i.\n", error);
         }
     }
 
