@@ -17,6 +17,8 @@ set x2data time
 set format x2 "%H:%M"
 unset mx2tics
 set y2tics
+set xrange ["`date --date='24 hours ago' +'%Y-%m-%d %H:%M:%S'`":"`date +'%Y-%m-%d %H:%M:%S'`"]
+set x2range ["`date --date='24 hours ago' +'%Y-%m-%d %H:%M:%S'`":"`date +'%Y-%m-%d %H:%M:%S'`"]
 
 plot "< sqlite3 database.sl3  \"SELECT created, temperature FROM anemometer WHERE created > datetime('now','localtime','-1 day')\"" using 1:2
 
