@@ -168,13 +168,17 @@ void printArray() {
    for (i=0; i<36; i++) {
        printf("%i", encodedBits[i]);
    }
+   printf("\n");
+   /*
    printf(" globalLevelsCounter=%i\n", globalLevelsCounter);
+   */
 }
 
 void decodeArray() {
    if (encodedBitsIndex < 36) {
        return;
    }
+   printArray();
    decodePluviometer();
    decodeWindData();
 }
@@ -239,8 +243,11 @@ void decodeWindData() {
     } else if (!encodedBits[9] || !encodedBits[10]) {
         int temperature = 0;
         int i;
-        for (i=12; i<24; i++) {
+        for (i=12; i<23; i++) {
            temperature |= encodedBits[i] << (i - 12);
+        }
+        if (encodedBits[23]) {
+           temperature = -2048 + temperature;
         }
         float temperatureFinal = (float)temperature/10;
 
