@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 #include <wiringPi.h>
 #include "db.h"
@@ -21,6 +22,7 @@ void decodeBitLength(int length);
 void decodeArray();
 void decodePluviometer();
 void decodeWindData();
+bool combinedSensorChecksumConfirmed();
 void printTime();
 
 char *filename;
@@ -265,14 +267,52 @@ void decodeWindData() {
 
         printTime();
         printf("Temperatura: %.2f C        Wilgotnosc: %i %%", temperatureFinal, humidity);
-        saveAnemometerTemperatureAndHumidity(temperatureFinal);
 
         if (encodedBits[8]) {
            printf("        Bateria: do wymiany (napiecie < 2.6V)\n");
         } else {
            printf("        Bateria: OK\n");
         }
+
+        if (combinedSensorChecksumConfirmed()) {
+            saveAnemometerTemperatureAndHumidity(temperatureFinal);
+        } else {
+            printf("WARNING! Checksum not confirmed. Data will NOT be saved in database\n");
+        }
     }
+}
+
+bool combinedSensorChecksumConfirmed() {
+    unsigned char computedChecksum = 0x0F;
+    int i = 0, j = 0;
+    for (i=0; i<32; i+=4) {
+        unsigned char nibble = 0;
+        for (j=0; j<4; j++) {
+            nibble |= encodedBits[i+j] << (j);
+        }
+/*
+        printf("%02x (%d) - %02x (%d) = ", computedChecksum, computedChecksum, nibble, nibble);
+*/
+        computedChecksum -= nibble;
+/*
+        printf("%02x (%d)\n", computedChecksum, computedChecksum);
+*/
+    }
+    computedChecksum &= 0x0F;
+
+    unsigned int readedChecksum = 0x00;
+    for (i=32; i<36; i++) {
+        readedChecksum |= encodedBits[i] << (i - 32);
+    }
+
+    bool checksumsAreEqual = (readedChecksum == computedChecksum);
+
+    if (!checksumsAreEqual) {
+        printTime();
+        printf("readedChecksum=%02x computedChecksum=%02x equal=%d\n", readedChecksum, computedChecksum, checksumsAreEqual);
+    }
+
+    return checksumsAreEqual;
 }
 
 void printTime() {
