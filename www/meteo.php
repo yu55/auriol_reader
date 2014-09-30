@@ -30,20 +30,15 @@ while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 }
 $result = $results->finalize();
 
-$results = $db->query("SELECT min(temperature) AS temperature FROM anemometer WHERE created > datetime('now','localtime','-1 day');");
+$results = $db->query("SELECT min(temperature) AS tmin, max(temperature) AS tmax FROM anemometer WHERE created > datetime('now','localtime','-1 day');");
 while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
-    $temperature = number_format($row['temperature'], 1);
+    $temperature = number_format($row['tmin'], 1);
     echo "<tr>";
     echo "<td>Minimalna temperatura powietrza za ostatnie 24 godziny</td><td> <b>{$temperature} &#8451;</b></td>";
     echo "</tr>";
-}
-$result = $results->finalize();
 
-$results = $db->query("SELECT max(temperature) AS temperature FROM anemometer WHERE created > datetime('now','localtime','-1 day');");
-while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
-
-    $temperature = number_format($row['temperature'], 1);
+    $temperature = number_format($row['tmax'], 1);
     echo "<tr>";
     echo "<td>Maksymalna temperatura powietrza za ostatnie 24 godziny</td><td> <b>{$temperature} &#8451;</b></td>";
     echo "</tr>";
