@@ -41,6 +41,7 @@ void savePluviometer(float amountInMilimeters) {
 
         if (error != SQLITE_OK) {
             printf("\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n", error);
+            exit(1);
         }
     }
 
@@ -70,6 +71,7 @@ void saveAnemometerTemperatureAndHumidity(float temperatureInC) {
 
         if (error != SQLITE_OK) {
             printf("\nSomething went wrong when inserting temperature into DB. Error code: %i.\n", error);
+            exit(1);
         }
     }
 
