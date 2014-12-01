@@ -12,12 +12,12 @@
 static const char LANG_DB_ERROR_OPENING[] = "ERROR: Can not open database!";
 static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nERROR in Pluviometer query: SQLite returned Error Code: %i.\n";
 static const char LANG_DB_ATAH_QUERY[] = "\nERROR in Temperature query: SQLite returned Error Code: %i.\n";
-
+static const char LANG_DB_TEMP_DIFF[] = "\nWARNING: Temperature difference out of bonds (%f to %f). Data will NOT be saved!\n"
 #else
 static const char LANG_DB_ERROR_OPENING[] = "Can not open database. Dying. Bye bye.";
 static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n";
 static const char LANG_DB_ATAH_QUERY[] = "\nSomething went wrong when inserting temperature into DB. Error code: %i.\n";
-
+static const char LANG_DB_TEMP_DIFF[] = "\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n"
 #endif
 
 sqlite3 *conn;
@@ -73,7 +73,7 @@ void saveAnemometerTemperatureAndHumidity(float temperatureInC) {
 
         float difference = atahPreviousTemperatureInC - temperatureInC;
         if ((difference < -1 || difference > 1) && atahPreviousTemperatureInC != -FLT_MAX) {
-            printf("\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n", atahPreviousTemperatureInC, temperatureInC);
+            printf(LANG_DB_TEMP_DIFF, atahPreviousTemperatureInC, temperatureInC);
             return;
         }
 
