@@ -15,16 +15,19 @@ static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nERROR in Pluviometer query: S
 static const char LANG_DB_ATAH_QUERY[] = "\nERROR in Temperature query: SQLite returned Error Code: %i.\n";
 static const char LANG_DB_TEMP_DIFF[] = "\nWARNING: Temperature difference out of bonds (%f to %f). Data will NOT be saved!\n";
 static const char LANG_DB_CREATE_TBL_PLUVIOMETER[] = "ERROR: Could not create pluviometer table! Error Code: %s.\n";
+static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds (%i). Data will NOT be saved!\n";
 #else
 static const char LANG_DB_ERROR_OPENING[] = "Can not open database. Dying. Bye bye.";
 static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n";
 static const char LANG_DB_ATAH_QUERY[] = "\nSomething went wrong when inserting temperature into DB. Error code: %i.\n";
 static const char LANG_DB_TEMP_DIFF[] = "\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n";
 static const char LANG_DB_CREATE_TBL_PLUVIOMETER[] = "ERROR: Could not create pluviometer table! Error Code: %s.\n";
+static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds (%i). Data will NOT be saved!\n";
 #endif
 
 static const char SQL_CREATE_TABLE_PLUVIOMETER[] = "CREATE TABLE IF NOT EXISTS pluviometer ( created DATETIME, amount  DECIMAL(10,2));";
 static const char SQL_CREATE_TABLE_TEMPERATURE[] = "CREATE TABLE IF NOT EXISTS temperature ( created DATETIME, amount  DECIMAL(4,1));";
+static const char SQL_CREATE_TABLE_HUMIDITY[]    = "CREATE TABLE IF NOT EXISTS humidity ( created DATETIME, amount  TINYINT);";
 
 #define INIT_PREVIOUS(X) previous_value X = { -FLT_MAX, -1 }
 typedef struct {
@@ -37,6 +40,7 @@ int error = 0;
 
 INIT_PREVIOUS( pluviometerPrevious );
 INIT_PREVIOUS( temperaturePrevious );
+INIT_PREVIOUS( humidityPrevious );
 
 void initializeDatabase() {
 	char *errMsg = 0;
@@ -119,4 +123,33 @@ void saveTemperature(float temperature) {
 
     temperaturePrevious.time  = local->tm_hour;
     temperaturePrevious.value = temperature;
+}
+
+void saveHumidity(unsigned int humidity) {
+   struct tm *local;
+   time_t t;
+
+   t = time(NULL);
+   local = localtime(&t);
+
+    if (humidityPrevious.time != local->tm_hour ||
+        humidityPrevious.value < humidity) {
+
+        if (humidity <= 0 || humidity > 100) {
+            printf(LANG_DB_HUMID_DIFF, humidity);
+            return;
+        }
+
+        char query[1024] = " ";
+        sprintf(query, "INSERT INTO humidity VALUES (datetime('now', 'localtime'), %i);", humidity);
+        error = sqlite3_exec(conn, query, 0, 0, 0);
+
+        if (error != SQLITE_OK) {
+            printf(LANG_DB_PLUVIOMETER_QUERY, error);
+            exit(1);
+        }
+    }
+
+    humidityPrevious.time  = local->tm_hour;
+    humidityPrevious.value = humidity;
 }

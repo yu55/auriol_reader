@@ -4,5 +4,6 @@
 void initializeDatabase();
 void savePluviometer(float amount);
 void saveTemperature(float temperature);
+void saveHumidity(unsigned int humidity);
 
 #endif

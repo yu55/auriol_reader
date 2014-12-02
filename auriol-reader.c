@@ -311,6 +311,7 @@ void decodeWindData() {
 
         if (combinedSensorChecksumConfirmed()) {
             saveTemperature(temperatureFinal);
+			saveHumidity(humidity);
         } else {
             printf(LANG_WARNING_CRC);
         }
