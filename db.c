@@ -6,7 +6,7 @@
 #include <time.h>
 #include <float.h>
 
-#define DB_FILENAME "database.sl3"
+#define DB_FILENAME "/var/local/auriol-db.sl3"
 #define TEMP_DIFF 10
 
 #ifdef LANGUAGE_ENGLISH
@@ -153,3 +153,22 @@ void saveHumidity(unsigned int humidity) {
     humidityPrevious.time  = local->tm_hour;
     humidityPrevious.value = humidity;
 }
+
+/* http://www.control.com/thread/1026210133
+ * By M.A.Saghafi on 11 October, 2010 - 8:26 am
+ * and M Barnes on 18 May, 2011 - 6:48 am
+ * 
+ * Try this with excel:
+ * For realvector averaging:
+ * Put windspeed and winddirection data in column A and B.
+ * Then calculate the components of wind (u and v are in column C and D):
+ *   =-A1*SIN(PI()/180*B1)
+ *   =-A1*COS(PI()/180*B1)
+ * In column E and F (for example,if you have 60 data in one hour) calculate the average of the components of wind:
+ *   =AVERAGE(c1:c60)
+ *   =AVERAGE(d1:d60)
+ * Column G is the average value of the windspeed:
+ *   =SQRT(e1*e1+f1*f1))
+ * Column H is the average value of the winddirection:
+ * =IF(e1=0,(IF(f1=0,"n/a",IF(f1>0;360;0))),IF(e1>0,(270-180/PI()*ATAN(f1/e1)),(90-180/PI()*ATAN(f1/e1))))
+**/
