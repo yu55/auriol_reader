@@ -8,6 +8,18 @@
 
 #define DB_FILENAME "database.sl3"
 
+#ifdef LANGUAGE_ENGLISH
+static const char LANG_DB_ERROR_OPENING[] = "ERROR: Can not open database!";
+static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nERROR in Pluviometer query: SQLite returned Error Code: %i.\n";
+static const char LANG_DB_ATAH_QUERY[] = "\nERROR in Temperature query: SQLite returned Error Code: %i.\n";
+
+#else
+static const char LANG_DB_ERROR_OPENING[] = "Can not open database. Dying. Bye bye.";
+static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n";
+static const char LANG_DB_ATAH_QUERY[] = "\nSomething went wrong when inserting temperature into DB. Error code: %i.\n";
+
+#endif
+
 sqlite3 *conn;
 int error = 0;
 
@@ -20,7 +32,7 @@ int atahPreviousTmHour = -1;
 void initializeDatabase() {
     error = sqlite3_open(DB_FILENAME, &conn);
     if (error) {
-         puts("Can not open database. Dying. Bye bye.");
+         puts(LANG_DB_ERROR_OPENING);
          exit(0);
     }
 }
@@ -40,7 +52,7 @@ void savePluviometer(float amountInMilimeters) {
         error = sqlite3_exec(conn, query, 0, 0, 0);
 
         if (error != SQLITE_OK) {
-            printf("\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n", error);
+            printf(LANG_DB_PLUVIOMETER_QUERY, error);
             exit(1);
         }
     }
@@ -70,7 +82,7 @@ void saveAnemometerTemperatureAndHumidity(float temperatureInC) {
         error = sqlite3_exec(conn, query, 0, 0, 0);
 
         if (error != SQLITE_OK) {
-            printf("\nSomething went wrong when inserting temperature into DB. Error code: %i.\n", error);
+            printf(LANG_DB_ATAH_QUERY, error);
             exit(1);
         }
     }
