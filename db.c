@@ -173,6 +173,7 @@ void saveWind(float speed, float gust, unsigned int direction ) {
 	windAVGDir[i]   = direction;
 	windAVGIndex++;
 	
+	/* Save average after WIND_SAMPLES samples  */
 	if ( windAVGIndex < WIND_SAMPLES || i > 0 )
 		return;
 	
@@ -198,5 +199,12 @@ void saveWind(float speed, float gust, unsigned int direction ) {
 	else
 		windDir = 90  - 180 / M_PI * atan( y/x );
 	
-	printf( "Average Wind Speed: %.1f   Wind Gust: %.1f   Wind Direction: %i\n", windSpeed, windGust, windDir );
+	char query[1024] = " ";
+	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", windSpeed, windGust, windDir );
+	error = sqlite3_exec(conn, query, 0, 0, 0);
+
+	if (error != SQLITE_OK) {
+		printf(LANG_DB_PLUVIOMETER_QUERY, error);
+		exit(7);
+	}
 }
