@@ -18,7 +18,7 @@ echo "<table>";
 echo "<col width=\"425\">";
 echo "<col width=\"300\">";
 
-$results = $db->query("SELECT created, temperature FROM anemometer ORDER BY created DESC LIMIT 1;");
+$results = $db->query("SELECT created, temperature FROM temperature ORDER BY created DESC LIMIT 1;");
 $created = " ";
 while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
@@ -30,7 +30,7 @@ while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 }
 $result = $results->finalize();
 
-$results = $db->query("SELECT min(temperature) AS tmin, max(temperature) AS tmax FROM anemometer WHERE created > datetime('now','localtime','-1 day');");
+$results = $db->query("SELECT min(temperature) AS tmin, max(temperature) AS tmax FROM temperature WHERE created > datetime('now','localtime','-1 day');");
 while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
 
     $temperature = number_format($row['tmin'], 1);

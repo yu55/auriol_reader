@@ -237,7 +237,8 @@ void decodePluviometer() {
 }
 
 void decodeWindData() {
-    if (encodedBits[9] && encodedBits[10] && encodedBits[12] && !encodedBits[13] && !encodedBits[14] && !encodedBits[15] && !encodedBits[16]
+    /* Average Wind Speed */
+	if (encodedBits[9] && encodedBits[10] && encodedBits[12] && !encodedBits[13] && !encodedBits[14] && !encodedBits[15] && !encodedBits[16]
            && !encodedBits[17] && !encodedBits[18] && !encodedBits[19] && !encodedBits[20] && !encodedBits[21] && !encodedBits[22] && !encodedBits[23]) {
         unsigned int windAverageSpeed = 0;
         int i;
@@ -253,6 +254,8 @@ void decodeWindData() {
         } else {
            printf(LANG_BATTERY_OK);
         }
+    
+    /* Wind gust & direction */
     } else if (encodedBits[9] && encodedBits[10] && encodedBits[12] && encodedBits[13] && encodedBits[14]) {
         unsigned int direction = 0;
         unsigned int windGust = 0;
@@ -272,6 +275,8 @@ void decodeWindData() {
         } else {
            printf(LANG_BATTERY_OK);
         }
+    
+    /* Temperature & Humidity */
     } else if (!encodedBits[9] || !encodedBits[10]) {
         int temperature = 0;
         int i;
@@ -305,7 +310,8 @@ void decodeWindData() {
         }
 
         if (combinedSensorChecksumConfirmed()) {
-            saveAnemometerTemperatureAndHumidity(temperatureFinal);
+            saveTemperature(temperatureFinal);
+			saveHumidity(humidity);
         } else {
             printf(LANG_WARNING_CRC);
         }

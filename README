@@ -25,5 +25,8 @@ Magic spell to build this thing:
 $  gcc -Wall -ansi -o build/auriol-pluviometer-reader -I/usr/local/include
 -L/usr/local/lib -lwiringPi -lrt -lsqlite3 auriol-reader.c db.c
 
+or just type:
+$  make
+
 Have a nice day :)
 
