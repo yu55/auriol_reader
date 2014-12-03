@@ -5,9 +5,12 @@
 #include <string.h>
 #include <time.h>
 #include <float.h>
+#include <math.h>
 
-#define DB_FILENAME "/var/local/auriol-db.sl3"
-#define TEMP_DIFF 10
+#define DB_FILENAME  "/var/local/auriol-db.sl3"
+#define M_PI         3.14159265358979323846  /* pi */
+#define TEMP_DIFF    10
+#define WIND_SAMPLES 10
 
 #ifdef LANGUAGE_ENGLISH
 static const char LANG_DB_ERROR_OPENING[] = "ERROR: Can not open database!";
@@ -26,10 +29,10 @@ static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds
 #endif
 
 static const char * SQL_CREATE_TABLE[] =  {
-	"CREATE TABLE IF NOT EXISTS pluviometer ( created DATETIME, amount  DECIMAL(10,2));",
-	"CREATE TABLE IF NOT EXISTS temperature ( created DATETIME, amount  DECIMAL(4,1));",
-	"CREATE TABLE IF NOT EXISTS humidity ( created DATETIME, amount  TINYINT);",
-	"CREATE TABLE IF NOT EXISTS wind ( created DATETIME, speed DECIMAL(3,1), gust DECIMAL(3,1), direction SMALLINT );"
+	"CREATE TABLE IF NOT EXISTS pluviometer( created DATETIME, amount  DECIMAL(10,2));",
+	"CREATE TABLE IF NOT EXISTS temperature( created DATETIME, amount  DECIMAL(4,1));",
+	"CREATE TABLE IF NOT EXISTS humidity( created DATETIME, amount  TINYINT);",
+	"CREATE TABLE IF NOT EXISTS wind( created DATETIME, speed DECIMAL(3,1), gust DECIMAL(3,1), direction SMALLINT );"
 };
 
 #define INIT_PREVIOUS(X) previous_value X = { -FLT_MAX, -1 }
@@ -44,6 +47,13 @@ int error = 0;
 INIT_PREVIOUS( pluviometerPrevious );
 INIT_PREVIOUS( temperaturePrevious );
 INIT_PREVIOUS( humidityPrevious );
+INIT_PREVIOUS( windPrevious );
+INIT_PREVIOUS( gustPrevious );
+
+float windAVGSpeed[WIND_SAMPLES];
+float windAVGGust[WIND_SAMPLES];
+int   windAVGDir[WIND_SAMPLES];
+int   windAVGIndex = 1;
 
 void initializeDatabase() {
 	char *errMsg = 0;
@@ -76,7 +86,7 @@ void savePluviometer(float amount) {
         pluviometerPrevious.value < amount) {
 
         char query[1024] = " ";
-        sprintf(query, "INSERT INTO pluviometer VALUES (datetime('now', 'localtime'), %f);", amount);
+        sprintf(query, "INSERT INTO pluviometer VALUES (datetime('now', 'localtime'), %.2f);", amount);
         error = sqlite3_exec(conn, query, 0, 0, 0);
         if (error != SQLITE_OK) {
             printf(LANG_DB_PLUVIOMETER_QUERY, error);
@@ -107,7 +117,7 @@ void saveTemperature(float temperature) {
         }
 
         char query[1024] = " ";
-        sprintf(query, "INSERT INTO temperature VALUES (datetime('now', 'localtime'), %f);", temperature);
+        sprintf(query, "INSERT INTO temperature VALUES (datetime('now', 'localtime'), %.1f);", temperature);
         error = sqlite3_exec(conn, query, 0, 0, 0);
 
         if (error != SQLITE_OK) {
@@ -151,23 +161,42 @@ void saveHumidity(unsigned int humidity) {
     humidityPrevious.value = humidity;
 }
 
-/* Calculating average wind direction
- * 
- * http://www.control.com/thread/1026210133
- * By M.A.Saghafi on 11 October, 2010 - 8:26 am
- * and M Barnes on 18 May, 2011 - 6:48 am
- * 
- * Try this with excel:
- * For realvector averaging:
- * Put windspeed and winddirection data in column A and B.
- * Then calculate the components of wind (u and v are in column C and D):
- *   =-A1*SIN(PI()/180*B1)
- *   =-A1*COS(PI()/180*B1)
- * In column E and F (for example,if you have 60 data in one hour) calculate the average of the components of wind:
- *   =AVERAGE(c1:c60)
- *   =AVERAGE(d1:d60)
- * Column G is the average value of the windspeed:
- *   =SQRT(e1*e1+f1*f1))
- * Column H is the average value of the winddirection:
- * =IF(e1=0,(IF(f1=0,"n/a",IF(f1>0;360;0))),IF(e1>0,(270-180/PI()*ATAN(f1/e1)),(90-180/PI()*ATAN(f1/e1))))
-**/
+void saveWind(float speed, float gust, unsigned int direction ) {
+	unsigned int i;
+	unsigned int windDir = 0;
+	float x, y, t, windSpeed;
+	float windGust = -1.0;
+	
+	i = windAVGIndex % WIND_SAMPLES;
+	windAVGSpeed[i] = speed;
+	windAVGGust[i]  = gust;
+	windAVGDir[i]   = direction;
+	windAVGIndex++;
+	
+	if ( windAVGIndex < WIND_SAMPLES || i > 0 )
+		return;
+	
+	/* Calculating average wind direction http://www.control.com/thread/1026210133
+	 * By M.A.Saghafi on 11 October, 2010 - 8:26 am and M Barnes on 18 May, 2011 - 6:48 am */ 
+	for ( i=0; i<WIND_SAMPLES; i++ ) {
+		t = M_PI / 180 * windAVGDir[i];
+		x += -windAVGSpeed[i] * sin( t );
+		y += -windAVGSpeed[i] * cos( t );
+		windSpeed += windAVGSpeed[i];
+		if ( windAVGGust[i] > windGust )
+			windGust = windAVGGust[i];
+	}
+	
+	windSpeed = windSpeed / WIND_SAMPLES;
+	x = x / WIND_SAMPLES;
+	y = y / WIND_SAMPLES;
+	
+	if ( x == 0 )
+		windDir = 0;
+	else if ( x > 0 )
+		windDir = 270 - 180 / M_PI * atan( y/x );
+	else
+		windDir = 90  - 180 / M_PI * atan( y/x );
+	
+	printf( "Average Wind Speed: %.1f   Wind Gust: %.1f   Wind Direction: %i\n", windSpeed, windGust, windDir );
+}

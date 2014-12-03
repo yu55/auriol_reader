@@ -1,5 +1,5 @@
-# File to compile the auriol-pluviometer-reader
-all: auriol-pluviometer-reader
-auriol-pluviometer-reader: auriol-reader.c
-	gcc -Wall -ansi -o build/auriol-pluviometer-reader -I/usr/local/include -L/usr/local/lib -lwiringPi -lrt -lsqlite3 auriol-reader.c db.c
+# File to compile the auriol-reader
+all: auriol-reader
+auriol-reader: auriol-reader.c
+	gcc -Wall -ansi -o auriol-reader -I/usr/local/include -L/usr/local/lib -lwiringPi -lrt -lm -lsqlite3 auriol-reader.c db.c
 
