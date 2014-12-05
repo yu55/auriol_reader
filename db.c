@@ -13,19 +13,22 @@
 #define WIND_SAMPLES 20
 
 #ifdef LANGUAGE_ENGLISH
-static const char LANG_DB_ERROR_OPENING[] = "ERROR: Can not open database!";
-static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nERROR in Pluviometer query: SQLite returned Error Code: %i.\n";
-static const char LANG_DB_ATAH_QUERY[] = "\nERROR in Temperature query: SQLite returned Error Code: %i.\n";
-static const char LANG_DB_TEMP_DIFF[] = "\nWARNING: Temperature difference out of bonds (%f to %f). Data will NOT be saved!\n";
-static const char LANG_DB_CREATE_TBL[] = "ERROR: Could not create pluviometer table! Error Msg: %s.\n%s\n";
-static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
+#define LANG_DB_ERROR_OPENING = "ERROR: Can not open database!";
+#define LANG_DB_PLUVIOMETER_QUERY = "\nERROR in Pluviometer query: SQLite returned Error Code: %i.\n";
+#define LANG_DB_TEMP_QUERY = "\nERROR in Temperature query: SQLite returned Error Code: %i.\n";
+#define LANG_DB_TEMP_DIFF = "\nWARNING: Temperature difference out of bonds (%f to %f). Data will NOT be saved!\n";
+#define LANG_DB_CREATE_TBL = "ERROR: Could not create database table! Error Msg: %s.\n%s\n";
+#define LANG_DB_HUMID_DIFF = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
+#define LANG_DB_WIND_QUERY = "\nERROR in Wind query: SQLite returned Error Code: %i.\n";
+
 #else
-static const char LANG_DB_ERROR_OPENING[] = "Can not open database. Dying. Bye bye.";
-static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n";
-static const char LANG_DB_ATAH_QUERY[] = "\nSomething went wrong when inserting temperature into DB. Error code: %i.\n";
-static const char LANG_DB_TEMP_DIFF[] = "\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n";
-static const char LANG_DB_CREATE_TBL[] = "ERROR: Could not create pluviometer table! Error Msg: %s.\n%s\n";
-static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
+#define LANG_DB_ERROR_OPENING = "Can not open database. Dying. Bye bye.";
+#define LANG_DB_PLUVIOMETER_QUERY = "\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n";
+#define LANG_DB_TEMP_QUERY = "\nSomething went wrong when inserting temperature into DB. Error code: %i.\n";
+#define LANG_DB_TEMP_DIFF = "\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n";
+#define LANG_DB_CREATE_TBL = "ERROR: Could not create database table! Error Msg: %s.\n%s\n";
+#define LANG_DB_HUMID_DIFF = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
+#define LANG_DB_WIND_QUERY = "\nERROR in Wind query: SQLite returned Error Code: %i.\n";
 #endif
 
 static const char * SQL_CREATE_TABLE[] =  {
@@ -61,14 +64,14 @@ void initializeDatabase() {
 	/* Open database */
     error = sqlite3_open(DB_FILENAME, &conn);
     if (error) {
-         puts(LANG_DB_ERROR_OPENING);
+         fprintf( stderr, LANG_DB_ERROR_OPENING );
          exit(3);
     }
     /* Create database tables, if not exits */
     for ( i=0; i<4; i++ ) {
 		error = sqlite3_exec(conn, SQL_CREATE_TABLE[i], 0, 0, &errMsg);
 		if (error != SQLITE_OK) {
-			printf(LANG_DB_CREATE_TBL, errMsg, SQL_CREATE_TABLE[i]);
+			fprintf( stderr, LANG_DB_CREATE_TBL, errMsg, SQL_CREATE_TABLE[i] );
 			exit(4);
 		}
 	}
@@ -89,7 +92,7 @@ void savePluviometer(float amount) {
         sprintf(query, "INSERT INTO pluviometer VALUES (datetime('now', 'localtime'), %.2f);", amount);
         error = sqlite3_exec(conn, query, 0, 0, 0);
         if (error != SQLITE_OK) {
-            printf(LANG_DB_PLUVIOMETER_QUERY, error);
+            fprintf( stderr, LANG_DB_PLUVIOMETER_QUERY, error);
             exit(5);
         }
     }
@@ -112,7 +115,7 @@ void saveTemperature(float temperature) {
 		/* Check for invalid values */
         float difference = temperaturePrevious.value - temperature;
         if ((difference < -TEMP_DIFF || difference > TEMP_DIFF) && temperaturePrevious.value != -FLT_MAX) {
-            printf(LANG_DB_TEMP_DIFF, temperaturePrevious.value, temperature);
+            fprintf( stderr, LANG_DB_TEMP_DIFF, temperaturePrevious.value, temperature);
             return;
         }
 
@@ -121,7 +124,7 @@ void saveTemperature(float temperature) {
         error = sqlite3_exec(conn, query, 0, 0, 0);
 
         if (error != SQLITE_OK) {
-            printf(LANG_DB_ATAH_QUERY, error);
+            fprintf( stderr, LANG_DB_TEMP_QUERY, error);
             exit(6);
         }
     }
@@ -143,7 +146,7 @@ void saveHumidity(unsigned int humidity) {
 
 		/* Check for invalid values */
         if (humidity <= 0 || humidity > 100) {
-            printf(LANG_DB_HUMID_DIFF, humidity);
+            fprintf( stderr, LANG_DB_HUMID_DIFF, humidity);
             return;
         }
 
@@ -152,7 +155,7 @@ void saveHumidity(unsigned int humidity) {
         error = sqlite3_exec(conn, query, 0, 0, 0);
 
         if (error != SQLITE_OK) {
-            printf(LANG_DB_PLUVIOMETER_QUERY, error);
+            fprintf( stderr, LANG_DB_PLUVIOMETER_QUERY, error);
             exit(7);
         }
     }
@@ -235,7 +238,7 @@ void saveWind(float speed, float gust, unsigned int direction ) {
 	error = sqlite3_exec(conn, query, 0, 0, 0);
 
 	if (error != SQLITE_OK) {
-		printf(LANG_DB_PLUVIOMETER_QUERY, error);
+		fprintf( stderr, LANG_DB_WIND_QUERY, error);
 		exit(7);
 	}
 }
