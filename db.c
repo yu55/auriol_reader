@@ -152,10 +152,14 @@ void saveHumidity(unsigned int humidity) {
 }
 
 void saveWind(float speed, float gust, unsigned int direction ) {
-	static time_t old_time  = 0;
-	static float  old_speed = -1.0;
-	static float  old_gust  = -1.0;
-	static int    old_dir   = -1;
+	static time_t     temp_time  = 0;
+	static float      temp_speed = -1.0;
+	static float      temp_gust  = -1.0;
+	static int        temp_dir   = -1;
+	static signed int old_hour   = -1;
+	static float      old_speed  = -1.0;
+	static float      old_gust   = -1.0;
+	static int        old_dir    = -1;
 	
 	unsigned int i;
 	unsigned int windDir = 0;
@@ -165,39 +169,39 @@ void saveWind(float speed, float gust, unsigned int direction ) {
 	time( &t );
 	
 	/* Check timestamp on previous reading. Discard old data if older than 2 sec */
-	if ( difftime( t, old_time ) > 2.0 ) {
-		old_speed = -1.0;
-		old_gust  = -1.0;
-		old_time  = t;
+	if ( difftime( t, temp_time ) > 2.0 ) {
+		temp_speed = -1.0;
+		temp_gust  = -1.0;
+		temp_time  = t;
 	}
 	
 	/* Store current wind data and return if it exists */
 	if ( speed > -1.0 ) {
-		if ( old_speed == speed )
+		if ( temp_speed == speed )
 			return;
-		old_speed = speed;
+		temp_speed = speed;
 	} else if ( gust > -1.0 ) {
-		if ( old_gust == gust )
+		if ( temp_gust == gust )
 			return;
-		old_gust  = gust;
-		old_dir   = direction;
+		temp_gust  = gust;
+		temp_dir   = direction;
 	}
 	
 	/* Return if only one value available */
-	if ( old_gust < 0 || old_speed < 0 )
+	if ( temp_gust < 0 || temp_speed < 0 )
 		return;
 	
 	i = windAVGIndex % WIND_SAMPLES;
-	windAVGSpeed[i] = old_speed;
-	windAVGGust[i]  = old_gust;
-	windAVGDir[i]   = old_dir;
+	windAVGSpeed[i] = temp_speed;
+	windAVGGust[i]  = temp_gust;
+	windAVGDir[i]   = temp_dir;
 	windAVGIndex++;
 	
 	/* Save average after a count of WIND_SAMPLES samples  */
 	if ( windAVGIndex < WIND_SAMPLES || i > 0 )
 		return;
 	
-	/* Calculating average wind direction http://www.control.com/thread/1026210133
+	/* Calculating average wind direction from http://www.control.com/thread/1026210133
 	 * By M.A.Saghafi on 11 October, 2010 - 8:26 am and M Barnes on 18 May, 2011 - 6:48 am */ 
 	for ( i=0; i<WIND_SAMPLES; i++ ) {
 		z = M_PI / 180 * windAVGDir[i];
@@ -218,13 +222,24 @@ void saveWind(float speed, float gust, unsigned int direction ) {
 		windDir = 270 - 180 / M_PI * atan( y/x );
 	else
 		windDir = 90  - 180 / M_PI * atan( y/x );
+	windDir = windDir % 360;
+	
+	/* Check if data has changed */
+	local = localtime(&t);
+    if (old_hour == local->tm_hour && old_dir == windDir && old_speed == windSpeed && old_gust == windGust )
+		return;
 	
 	char query[1024] = " ";
-	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", windSpeed, windGust, (windDir%360) );
+	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", windSpeed, windGust, windDir );
 	error = sqlite3_exec(conn, query, 0, 0, 0);
 
 	if (error != SQLITE_OK) {
 		fprintf( stderr, LANG_DB_WIND_QUERY, error);
 		exit(7);
 	}
+	
+	old_hour  = local->tm_hour;
+	old_dir   = windDir;
+	old_speed = windSpeed;
+	old_gust  = windGust;
 }
