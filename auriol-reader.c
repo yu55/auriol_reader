@@ -16,32 +16,32 @@
 #define LENGTHS_MARGIN 5      /* .5 ms */
 
 #ifdef LANGUAGE_ENGLISH
-#define LANG_PROGRAM_TITLE = "433 MHz Wireless Weather Station Decoder running on Raspberry Pi.\n";
-#define LANG_BATTERY_OK = "        Battery: OK\n";
-#define LANG_BATTERY_REPLACE = "        Battery: Replace (<2.6V)!\n";
-#define LANG_TRANS_FILE_OPEN_ERR = "ERROR: Could not open transmission data file!";
-#define LANG_TRANS_FILE_END = "End of transmission data.";
-#define LANG_INFO_PLUVIOMETER = "Rain: %.2f mm";
-#define LANG_INFO_WIND_AVG = "Wind Speed: %.1f m/s";
-#define LANG_INFO_WIND_DIR_GUST = "Wind Direction: %i deg        Wind Gust: %.1f m/s";
-#define LANG_INFO_TEMP_HUMIDITY = "Temperature: %.1f C        Humidity: %i %%";
-#define LANG_INFO_CRC_DIFFER = "ReceivedChecksum: %02x CalculatedChecksum: %02x Equal: %d\n";
-#define LANG_WARNING_CRC = "WARNING: Checksum failed. Data will NOT be saved!\n";
-#define LANG_DATE_TIME = "[%i-%02i-%02i %02i:%02i:%02i] ";
+static const char LANG_PROGRAM_TITLE[] = "433 MHz Wireless Weather Station Decoder running on Raspberry Pi.\n";
+static const char LANG_BATTERY_OK[] = "        Battery: OK\n";
+static const char LANG_BATTERY_REPLACE[] = "        Battery: Replace (<2.6V)!\n";
+static const char LANG_TRANS_FILE_OPEN_ERR[] = "ERROR: Could not open transmission data file!";
+static const char LANG_TRANS_FILE_END[] = "End of transmission data.";
+static const char LANG_INFO_PLUVIOMETER[] = "Rain: %.2f mm";
+static const char LANG_INFO_WIND_AVG[] = "Wind Speed: %.1f m/s";
+static const char LANG_INFO_WIND_DIR_GUST[] = "Wind Direction: %i deg        Wind Gust: %.1f m/s";
+static const char LANG_INFO_TEMP_HUMIDITY[] = "Temperature: %.1f C        Humidity: %i %%";
+static const char LANG_INFO_CRC_DIFFER[] = "ReceivedChecksum: %02x CalculatedChecksum: %02x Equal: %d\n";
+static const char LANG_WARNING_CRC[] = "WARNING: Checksum failed. Data will NOT be saved!\n";
+static const char LANG_DATE_TIME[] = "[%i-%02i-%02i %02i:%02i:%02i] ";
 
 #else
-#define LANG_PROGRAM_TITLE = "Dekoder czujnikow bezprzewodowych 433 MHz na Raspberry Pi uruchomiony.\n";
-#define LANG_BATTERY_OK = "        Bateria: OK\n";
-#define LANG_BATTERY_REPLACE = "        Bateria: do wymiany (napiecie < 2.6V)\n";
-#define LANG_TRANS_FILE_OPEN_ERR = "Could not open file with transmission data. Terminating. Good-bye!";
-#define LANG_TRANS_FILE_END = "Reached end of file with transmission data. Terminating. Good-bye!";
-#define LANG_INFO_PLUVIOMETER = "Deszczomierz: %.2f mm";
-#define LANG_INFO_WIND_AVG = "Srednia predkosc wiatru: %.2f m/s";
-#define LANG_INFO_WIND_DIR_GUST = "Kierunek wiatru: %i stopni        Poryw: %.2f m/s";
-#define LANG_INFO_TEMP_HUMIDITY = "Temperatura: %.2f C        Wilgotnosc: %i %%";
-#define LANG_INFO_CRC_DIFFER = "readedChecksum=%02x computedChecksum=%02x equal=%d\n";
-#define LANG_WARNING_CRC = "WARNING! Checksum not confirmed. Data will NOT be saved in database\n";
-#define LANG_DATE_TIME = "[%i-%02i-%02i %02i:%02i:%02i] ";
+static const char LANG_PROGRAM_TITLE[] = "Dekoder czujnikow bezprzewodowych 433 MHz na Raspberry Pi uruchomiony.\n";
+static const char LANG_BATTERY_OK[] = "        Bateria: OK\n";
+static const char LANG_BATTERY_REPLACE[] = "        Bateria: do wymiany (napiecie < 2.6V)\n";
+static const char LANG_TRANS_FILE_OPEN_ERR[] = "Could not open file with transmission data. Terminating. Good-bye!";
+static const char LANG_TRANS_FILE_END[] = "Reached end of file with transmission data. Terminating. Good-bye!";
+static const char LANG_INFO_PLUVIOMETER[] = "Deszczomierz: %.2f mm";
+static const char LANG_INFO_WIND_AVG[] = "Srednia predkosc wiatru: %.2f m/s";
+static const char LANG_INFO_WIND_DIR_GUST[] = "Kierunek wiatru: %i stopni        Poryw: %.2f m/s";
+static const char LANG_INFO_TEMP_HUMIDITY[] = "Temperatura: %.2f C        Wilgotnosc: %i %%";
+static const char LANG_INFO_CRC_DIFFER[] = "readedChecksum=%02x computedChecksum=%02x equal=%d\n";
+static const char LANG_WARNING_CRC[] = "WARNING! Checksum not confirmed. Data will NOT be saved in database\n";
+static const char LANG_DATE_TIME[] = "[%i-%02i-%02i %02i:%02i:%02i] ";
 #endif
 
 void openFileWithTransmissionData();

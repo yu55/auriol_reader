@@ -13,22 +13,22 @@
 #define WIND_SAMPLES 20
 
 #ifdef LANGUAGE_ENGLISH
-#define LANG_DB_ERROR_OPENING = "ERROR: Can not open database!";
-#define LANG_DB_PLUVIOMETER_QUERY = "\nERROR in Pluviometer query: SQLite returned Error Code: %i.\n";
-#define LANG_DB_TEMP_QUERY = "\nERROR in Temperature query: SQLite returned Error Code: %i.\n";
-#define LANG_DB_TEMP_DIFF = "\nWARNING: Temperature difference out of bonds (%f to %f). Data will NOT be saved!\n";
-#define LANG_DB_CREATE_TBL = "ERROR: Could not create database table! Error Msg: %s.\n%s\n";
-#define LANG_DB_HUMID_DIFF = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
-#define LANG_DB_WIND_QUERY = "\nERROR in Wind query: SQLite returned Error Code: %i.\n";
+static const char LANG_DB_ERROR_OPENING[] = "ERROR: Can not open database!";
+static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nERROR in Pluviometer query: SQLite returned Error Code: %i.\n";
+static const char LANG_DB_TEMP_QUERY[] = "\nERROR in Temperature query: SQLite returned Error Code: %i.\n";
+static const char LANG_DB_TEMP_DIFF[] = "\nWARNING: Temperature difference out of bonds (%f to %f). Data will NOT be saved!\n";
+static const char LANG_DB_CREATE_TBL[] = "ERROR: Could not create database table! Error Msg: %s.\n%s\n";
+static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
+static const char LANG_DB_WIND_QUERY[] = "\nERROR in Wind query: SQLite returned Error Code: %i.\n";
 
 #else
-#define LANG_DB_ERROR_OPENING = "Can not open database. Dying. Bye bye.";
-#define LANG_DB_PLUVIOMETER_QUERY = "\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n";
-#define LANG_DB_TEMP_QUERY = "\nSomething went wrong when inserting temperature into DB. Error code: %i.\n";
-#define LANG_DB_TEMP_DIFF = "\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n";
-#define LANG_DB_CREATE_TBL = "ERROR: Could not create database table! Error Msg: %s.\n%s\n";
-#define LANG_DB_HUMID_DIFF = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
-#define LANG_DB_WIND_QUERY = "\nERROR in Wind query: SQLite returned Error Code: %i.\n";
+static const char LANG_DB_ERROR_OPENING[] = "Can not open database. Dying. Bye bye.";
+static const char LANG_DB_PLUVIOMETER_QUERY[] = "\nSomething went wrong when inserting pluviometer data into DB. Error code: %i.\n";
+static const char LANG_DB_TEMP_QUERY[] = "\nSomething went wrong when inserting temperature into DB. Error code: %i.\n";
+static const char LANG_DB_TEMP_DIFF[] = "\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n";
+static const char LANG_DB_CREATE_TBL[] = "ERROR: Could not create database table! Error Msg: %s.\n%s\n";
+static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
+static const char LANG_DB_WIND_QUERY[] = "\nERROR in Wind query: SQLite returned Error Code: %i.\n";
 #endif
 
 static const char * SQL_CREATE_TABLE[] =  {
