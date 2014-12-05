@@ -9,11 +9,11 @@
 #include "db.h"
 
 /* #define ARRAY_SIZE 4800000 */
-#define SYNCHRO_LENGTH 178
-#define SEPARATOR_LENGTH 9
-#define ZERO_LENGTH 38
-#define ONE_LENGTH 78
-#define LENGTHS_MARGIN 5
+#define SYNCHRO_LENGTH 178    /*  9 ms */
+#define SEPARATOR_LENGTH 9    /*  1 ms */
+#define ZERO_LENGTH 38        /*  2 ms */
+#define ONE_LENGTH 78         /*  4 ms */
+#define LENGTHS_MARGIN 5      /* .5 ms */
 
 #ifdef LANGUAGE_ENGLISH
 static const char LANG_PROGRAM_TITLE[] = "433 MHz Wireless Weather Station Decoder running on Raspberry Pi.\n";
@@ -136,6 +136,8 @@ unsigned char readLevel() {
 /* Analyze transmission bit after bit */
 int findEncodedBitLength(unsigned char level) {
        levelsCounter++;
+	   
+	   /* Out of range */
        if (levelsCounter > SYNCHRO_LENGTH + LENGTHS_MARGIN + SEPARATOR_LENGTH + LENGTHS_MARGIN) {
            levelsCounter = 1;
            resetRecording();
@@ -170,20 +172,32 @@ void decodeBitLength(int length) {
 /*       if (length > -1) {
           printf("%i %i\n", length, globalLevelsCounter);
        }*/
+
+       /* Signal length too short */
        if (length < ZERO_LENGTH - LENGTHS_MARGIN) {
            return;
        }
+       
+       /* Sync bit - Start of data package */
        if (length > SYNCHRO_LENGTH - LENGTHS_MARGIN*2 && length < SYNCHRO_LENGTH + LENGTHS_MARGIN*2 && !recording) {
            resetRecording();
            recording = 1;
+	   
+	   /* One  */
        } else if (length > ONE_LENGTH - LENGTHS_MARGIN && length < ONE_LENGTH + LENGTHS_MARGIN && recording) {
            encodedBits[encodedBitsIndex++] = 1;
+       
+	   /* Zero */
        } else if (length > ZERO_LENGTH - LENGTHS_MARGIN && length < ZERO_LENGTH + LENGTHS_MARGIN && recording) {
            encodedBits[encodedBitsIndex++] = 0;
+	    
+	   /* Sync bit - End of data package */
        } else if (length > SYNCHRO_LENGTH - LENGTHS_MARGIN*2 && length < SYNCHRO_LENGTH + LENGTHS_MARGIN*2 && recording) {
            decodeArray();
            resetRecording();
            recording = 1;
+	   
+       /* Signal length too long */
        } else if (recording) {
            resetRecording();
        }
@@ -254,7 +268,7 @@ void decodeWindData() {
         } else {
            printf(LANG_BATTERY_OK);
         }
-    
+        
     /* Wind gust & direction */
     } else if (encodedBits[9] && encodedBits[10] && encodedBits[12] && encodedBits[13] && encodedBits[14]) {
         unsigned int direction = 0;
