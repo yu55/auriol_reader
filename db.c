@@ -10,7 +10,7 @@
 #define DB_FILENAME  "/var/local/auriol-db.sl3"
 #define M_PI         3.14159265358979323846  /* pi */
 #define TEMP_DIFF    10
-#define WIND_SAMPLES 10
+#define WIND_SAMPLES 20
 
 #ifdef LANGUAGE_ENGLISH
 static const char LANG_DB_ERROR_OPENING[] = "ERROR: Can not open database!";
@@ -162,27 +162,58 @@ void saveHumidity(unsigned int humidity) {
 }
 
 void saveWind(float speed, float gust, unsigned int direction ) {
+	static time_t old_time  = 0;
+	static float  old_speed = -1.0;
+	static float  old_gust  = -1.0;
+	static int    old_dir   = -1;
+	
+	time_t t;
 	unsigned int i;
 	unsigned int windDir = 0;
-	float x, y, t, windSpeed;
+	float x, y, z, windSpeed;
 	float windGust = -1.0;
 	
+	time( &t );
+	
+	/* Check timestamp on previous reading. Discard old data if older than 2 sec */
+	if ( difftime( t, old_time ) > 2.0 ) {
+		old_speed = -1.0;
+		old_gust  = -1.0;
+		old_time  = t;
+	}
+	
+	/* Store current wind data and return if it exists */
+	if ( speed > -1.0 ) {
+		if ( old_speed == speed )
+			return;
+		old_speed = speed;
+	} else if ( gust > -1.0 ) {
+		if ( old_gust == gust )
+			return;
+		old_gust  = gust;
+		old_dir   = direction;
+	}
+	
+	/* Return if only one value available */
+	if ( old_gust < 0 || old_speed < 0 )
+		return;
+	
 	i = windAVGIndex % WIND_SAMPLES;
-	windAVGSpeed[i] = speed;
-	windAVGGust[i]  = gust;
-	windAVGDir[i]   = direction;
+	windAVGSpeed[i] = old_speed;
+	windAVGGust[i]  = old_gust;
+	windAVGDir[i]   = old_dir;
 	windAVGIndex++;
 	
-	/* Save average after WIND_SAMPLES samples  */
+	/* Save average after a count of WIND_SAMPLES samples  */
 	if ( windAVGIndex < WIND_SAMPLES || i > 0 )
 		return;
 	
 	/* Calculating average wind direction http://www.control.com/thread/1026210133
 	 * By M.A.Saghafi on 11 October, 2010 - 8:26 am and M Barnes on 18 May, 2011 - 6:48 am */ 
 	for ( i=0; i<WIND_SAMPLES; i++ ) {
-		t = M_PI / 180 * windAVGDir[i];
-		x += -windAVGSpeed[i] * sin( t );
-		y += -windAVGSpeed[i] * cos( t );
+		z = M_PI / 180 * windAVGDir[i];
+		x += -windAVGSpeed[i] * sin( z );
+		y += -windAVGSpeed[i] * cos( z );
 		windSpeed += windAVGSpeed[i];
 		if ( windAVGGust[i] > windGust )
 			windGust = windAVGGust[i];
@@ -200,7 +231,7 @@ void saveWind(float speed, float gust, unsigned int direction ) {
 		windDir = 90  - 180 / M_PI * atan( y/x );
 	
 	char query[1024] = " ";
-	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", windSpeed, windGust, windDir );
+	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", windSpeed, windGust, (windDir%360) );
 	error = sqlite3_exec(conn, query, 0, 0, 0);
 
 	if (error != SQLITE_OK) {

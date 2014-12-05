@@ -269,6 +269,8 @@ void decodeWindData() {
            printf(LANG_BATTERY_OK);
         }
         
+        saveWind( (float)windAverageSpeed/5, -1.0, -1 );
+    
     /* Wind gust & direction */
     } else if (encodedBits[9] && encodedBits[10] && encodedBits[12] && encodedBits[13] && encodedBits[14]) {
         unsigned int direction = 0;
@@ -290,6 +292,8 @@ void decodeWindData() {
            printf(LANG_BATTERY_OK);
         }
     
+        saveWind( -1.0, (float)windGust/5, direction );
+		
     /* Temperature & Humidity */
     } else if (!encodedBits[9] || !encodedBits[10]) {
         int temperature = 0;
