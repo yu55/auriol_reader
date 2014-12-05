@@ -38,21 +38,10 @@ static const char * SQL_CREATE_TABLE[] =  {
 	"CREATE TABLE IF NOT EXISTS wind( created DATETIME, speed DECIMAL(3,1), gust DECIMAL(3,1), direction SMALLINT );"
 };
 
-#define INIT_PREVIOUS(X) previous_value X = { -FLT_MAX, -1 }
-typedef struct {
-	float value;
-	int   time;
-} previous_value;
-
 sqlite3 *conn;
 int error = 0;
-
-INIT_PREVIOUS( pluviometerPrevious );
-INIT_PREVIOUS( temperaturePrevious );
-INIT_PREVIOUS( humidityPrevious );
-INIT_PREVIOUS( windPrevious );
-INIT_PREVIOUS( gustPrevious );
-
+struct tm *local;
+time_t t;
 float windAVGSpeed[WIND_SAMPLES];
 float windAVGGust[WIND_SAMPLES];
 int   windAVGDir[WIND_SAMPLES];
@@ -78,16 +67,14 @@ void initializeDatabase() {
 }
 
 void savePluviometer(float amount) {
-   struct tm *local;
-   time_t t;
+	static signed int old_hour  = -1;
+	static float      old_value = -FLT_MAX;
 
-   t = time(NULL);
-   local = localtime(&t);
+	t = time(NULL);
+	local = localtime(&t);
    
 	/* Store if value has changed or older than an hour */
-    if (pluviometerPrevious.time != local->tm_hour ||
-        pluviometerPrevious.value < amount) {
-
+    if ( old_hour != local->tm_hour || old_value < amount ) {
         char query[1024] = " ";
         sprintf(query, "INSERT INTO pluviometer VALUES (datetime('now', 'localtime'), %.2f);", amount);
         error = sqlite3_exec(conn, query, 0, 0, 0);
@@ -97,25 +84,25 @@ void savePluviometer(float amount) {
         }
     }
 
-    pluviometerPrevious.time  = local->tm_hour;
-    pluviometerPrevious.value = amount;
+    old_hour  = local->tm_hour;
+    old_value = amount;
 }
 
 void saveTemperature(float temperature) {
-   struct tm *local;
-   time_t t;
+	static signed int old_hour = -1;
+	static float old_value     = -FLT_MAX;
 
-   t = time(NULL);
-   local = localtime(&t);
+	t = time(NULL);
+	local = localtime(&t);
    
 	/* Store if value has changed or older than an hour */
-    if (temperaturePrevious.time != local->tm_hour ||
-        temperaturePrevious.value != temperature) {
+    if ( old_hour != local->tm_hour ||
+        old_value != temperature ) {
 		
 		/* Check for invalid values */
-        float difference = temperaturePrevious.value - temperature;
-        if ((difference < -TEMP_DIFF || difference > TEMP_DIFF) && temperaturePrevious.value != -FLT_MAX) {
-            fprintf( stderr, LANG_DB_TEMP_DIFF, temperaturePrevious.value, temperature);
+        float difference = old_value - temperature;
+        if ((difference < -TEMP_DIFF || difference > TEMP_DIFF) && old_value != -FLT_MAX) {
+            printf(LANG_DB_TEMP_DIFF, old_value, temperature);
             return;
         }
 
@@ -129,20 +116,20 @@ void saveTemperature(float temperature) {
         }
     }
 
-    temperaturePrevious.time  = local->tm_hour;
-    temperaturePrevious.value = temperature;
+    old_hour = local->tm_hour;
+    old_value = temperature;
 }
 
 void saveHumidity(unsigned int humidity) {
-   struct tm *local;
-   time_t t;
+	static signed int old_hour = -1;
+	static float old_value     = -FLT_MAX;
 
    t = time(NULL);
    local = localtime(&t);
 
 	/* Store if value has changed or older than an hour */
-    if (humidityPrevious.time != local->tm_hour ||
-        humidityPrevious.value != humidity) {
+    if (old_hour != local->tm_hour ||
+        old_value != humidity) {
 
 		/* Check for invalid values */
         if (humidity <= 0 || humidity > 100) {
@@ -160,8 +147,8 @@ void saveHumidity(unsigned int humidity) {
         }
     }
 
-    humidityPrevious.time  = local->tm_hour;
-    humidityPrevious.value = humidity;
+    old_hour  = local->tm_hour;
+    old_value = humidity;
 }
 
 void saveWind(float speed, float gust, unsigned int direction ) {
@@ -170,7 +157,6 @@ void saveWind(float speed, float gust, unsigned int direction ) {
 	static float  old_gust  = -1.0;
 	static int    old_dir   = -1;
 	
-	time_t t;
 	unsigned int i;
 	unsigned int windDir = 0;
 	float x, y, z, windSpeed;
