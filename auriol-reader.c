@@ -205,20 +205,20 @@ void decodeBitLength(int length) {
 }
 
 void printArray() {
-   if (encodedBitsIndex == 0) {
-        return;
-   }
+	if (encodedBitsIndex == 0)
+		return;
 
-   printTime();
-
-   int i = 0;
-   for (i=0; i<36; i++) {
-       printf("%i", encodedBits[i]);
-   }
-   printf("\n");
-   /*
-   printf(" globalLevelsCounter=%i\n", globalLevelsCounter);
-   */
+	int i;
+	struct tm *local;
+	time_t t = time(NULL);
+	local = localtime(&t);
+	
+	fprintf(stderr, LANG_DATE_TIME, (local->tm_year + 1900), (local->tm_mon) + 1, local->tm_mday, local->tm_hour,
+		local->tm_min, local->tm_sec);
+	
+	for (i=0; i<36; i++)
+		fprintf(stderr, "%i", encodedBits[i]);
+	fprintf(stderr, "\n");
 }
 
 void decodeArray() {
