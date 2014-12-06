@@ -1,4 +1,11 @@
 # File to compile the auriol-reader
+
+# TODO
+# Create an install target to place
+# - auriol-reader in /usr/local/bin
+# - start-up scripts in /etc/init.d and /etc/rcX.d
+# - Webb pages in /var/www/auriol-reader and config file in /etc/apache2/sites-*
+
 all: clean auriol-reader
 
 auriol-reader: auriol-reader.c
