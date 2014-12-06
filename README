@@ -1,13 +1,13 @@
-Prototype web interface for AURIOL H13726 weather station on Raspberry Pi.
+Prototype web interface for AURIOL H13726 and Ventus W155 weather station 
+on Raspberry Pi.
 -------------------------------------------------------------------------------
+
 Data is received via cheap chinese receiver XY-MK-5V.
 It's a prototype so repo and code is a mess. But it works :)
 You can use and do everything You want with it.
 
-auriol-reader - reads and decodes radio transmissions from pluviometer and
-anemometer devices.
-
-gpio-poller - polls GPIO and prints data to stdout
+auriol-reader - reads and decodes 433Mhz radio transmissions from pluviometer 
+and anemometer devices.
 
 db - sqlite3 data recording utility
 
@@ -22,10 +22,6 @@ This project uses Wiring Pi library (http://wiringpi.com/) so You should
 install it first.
 
 Magic spell to build this thing:
-$  gcc -Wall -ansi -o build/auriol-pluviometer-reader -I/usr/local/include
--L/usr/local/lib -lwiringPi -lrt -lsqlite3 auriol-reader.c db.c
-
-or just type:
 $  make
 
 Have a nice day :)
