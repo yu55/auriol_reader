@@ -1,3 +1,7 @@
+/* TODO
+ * - Do not calculate average wind direction on sampls where windSpeed = 0.0
+*/
+
 #include "db.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +14,7 @@
 #define DB_FILENAME  "/var/local/auriol-db.sl3"
 #define M_PI         3.14159265358979323846  /* pi */
 #define TEMP_DIFF    10
-#define WIND_SAMPLES 20
+#define WIND_SAMPLES 125 /* Should be enough for 1 hour*/
 
 #ifdef LANGUAGE_ENGLISH
 static const char LANG_DB_ERROR_OPENING[] = "ERROR: Can not open database!";
@@ -42,10 +46,6 @@ sqlite3 *conn;
 int error = 0;
 struct tm *local;
 time_t t;
-float windAVGSpeed[WIND_SAMPLES];
-float windAVGGust[WIND_SAMPLES];
-int   windAVGDir[WIND_SAMPLES];
-int   windAVGIndex = 1;
 
 void initializeDatabase() {
 	char *errMsg = 0;
@@ -151,86 +151,78 @@ void saveHumidity(unsigned int humidity) {
     old_value = humidity;
 }
 
-void saveWind(float speed, float gust, unsigned int direction ) {
+void saveWind(float speed, float gust, unsigned int dir ) {
 	static time_t     temp_time  = 0;
-	static float      temp_speed = -1.0;
-	static float      temp_gust  = -1.0;
-	static int        temp_dir   = -1;
 	static signed int old_hour   = -1;
-	static float      old_speed  = -1.0;
-	static float      old_gust   = -1.0;
-	static int        old_dir    = -1;
+	static signed int counter    = -1;
+	static float      windSpeed[WIND_SAMPLES];
+	static float      windGust[WIND_SAMPLES];
+	static int        windDir[WIND_SAMPLES];
 	
+	float x, y, rad;
 	unsigned int i;
-	unsigned int windDir = 0;
-	float x, y, z, windSpeed;
-	float windGust = -1.0;
 	
 	time( &t );
+	local = localtime(&t);
 	
-	/* Check timestamp on previous reading. Discard old data if older than 2 sec */
+	/* Check timestamp on previous reading. Discard old incomplete data */
 	if ( difftime( t, temp_time ) > 2.0 ) {
-		temp_speed = -1.0;
-		temp_gust  = -1.0;
-		temp_time  = t;
+		/* First pass */
+		if ( counter < 0 )
+			counter = 0;
+		else if ( windSpeed[counter] > -1.0 && windGust[counter] > -1.0 )
+			counter++;
+		i = counter % WIND_SAMPLES;
+		windSpeed[i] = -1.0;
+		windGust[i]  = -1.0;
+		windDir[i]   = -1;
+		temp_time    = time( NULL );
 	}
 	
-	/* Store current wind data and return if it exists */
+	/* Store current wind data */
+	i = counter % WIND_SAMPLES;
 	if ( speed > -1.0 ) {
-		if ( temp_speed == speed )
-			return;
-		temp_speed = speed;
+		windSpeed[i] = speed;
 	} else if ( gust > -1.0 ) {
-		if ( temp_gust == gust )
-			return;
-		temp_gust  = gust;
-		temp_dir   = direction;
+		windGust[i]  = gust;
+		windDir[i]   = dir;
 	}
+	fprintf( stderr, "%i: Speed: %.1f\tGust: %.1f\tDir: %i\n", i, windSpeed[i], windGust[i], windDir[i] );
 	
-	/* Return if only one value available */
-	if ( temp_gust < 0 || temp_speed < 0 )
+	/* Return if only one value available or less than an hour passed */
+	if ( old_hour == local->tm_hour || windSpeed[i] < 0.0 || windGust[i] < 0.0 )
 		return;
 	
-	i = windAVGIndex % WIND_SAMPLES;
-	windAVGSpeed[i] = temp_speed;
-	windAVGGust[i]  = temp_gust;
-	windAVGDir[i]   = temp_dir;
-	windAVGIndex++;
-	
-	/* Save average after a count of WIND_SAMPLES samples  */
-	if ( windAVGIndex < WIND_SAMPLES || i > 0 )
-		return;
-	
-	/* Calculating average wind direction from http://www.control.com/thread/1026210133
+	/* Calculating averages 
+	 * Wind dir from http://www.control.com/thread/1026210133
 	 * By M.A.Saghafi on 11 October, 2010 - 8:26 am and M Barnes on 18 May, 2011 - 6:48 am */ 
-	for ( i=0; i<WIND_SAMPLES; i++ ) {
-		z = M_PI / 180 * windAVGDir[i];
-		x += -windAVGSpeed[i] * sin( z );
-		y += -windAVGSpeed[i] * cos( z );
-		windSpeed += windAVGSpeed[i];
-		if ( windAVGGust[i] > windGust )
-			windGust = windAVGGust[i];
+	for ( i = 0; i < ++counter; i++ ) {
+		dir = i % WIND_SAMPLES;
+		rad = M_PI / 180 * windDir[dir];
+		x  += -windSpeed[dir] * sin( rad );
+		y  += -windSpeed[dir] * cos( rad );
+		speed += windSpeed[dir];
+		if ( windGust[dir] > gust )
+			gust = windGust[dir];
+		windSpeed[dir] = -1.0;
+		windGust[dir]  = -1.0;
+		windDir[dir]   = -1;
 	}
 	
-	windSpeed = windSpeed / WIND_SAMPLES;
-	x = x / WIND_SAMPLES;
-	y = y / WIND_SAMPLES;
+	speed = speed / counter;
+	x = x / counter;
+	y = y / counter;
 	
 	if ( x == 0 )
-		windDir = 0;
+		dir = 0;
 	else if ( x > 0 )
-		windDir = 270 - 180 / M_PI * atan( y/x );
+		dir = 270 - 180 / M_PI * atan( y/x );
 	else
-		windDir = 90  - 180 / M_PI * atan( y/x );
-	windDir = windDir % 360;
+		dir = 90  - 180 / M_PI * atan( y/x );
+	dir = dir % 360;
 	
-	/* Check if data has changed */
-	local = localtime(&t);
-    if (old_hour == local->tm_hour && old_dir == windDir && old_speed == windSpeed && old_gust == windGust )
-		return;
-	
-	char query[1024] = " ";
-	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", windSpeed, windGust, windDir );
+	char query[80] = " ";
+	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", speed, gust, dir );
 	error = sqlite3_exec(conn, query, 0, 0, 0);
 
 	if (error != SQLITE_OK) {
@@ -238,8 +230,6 @@ void saveWind(float speed, float gust, unsigned int direction ) {
 		exit(7);
 	}
 	
-	old_hour  = local->tm_hour;
-	old_dir   = windDir;
-	old_speed = windSpeed;
-	old_gust  = windGust;
+	old_hour = local->tm_hour;
+	counter  = -1;
 }
