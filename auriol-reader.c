@@ -277,7 +277,7 @@ void decodeWindData() {
         unsigned int direction = 0;
         unsigned int windGust = 0;
         int i;
-        for (i=15; i<23; i++) {
+        for (i=15; i<24; i++) {
            direction |= encodedBits[i] << (i - 15);
         }
         for (i=24; i<32; i++) {
