@@ -234,7 +234,7 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 	/* Calculating averages 
 	 * Wind dir from http://www.control.com/thread/1026210133
 	 * By M.A.Saghafi on 11 October, 2010 - 8:26 am and M Barnes on 18 May, 2011 - 6:48 am */ 
-	++counter;
+	++counter;	/* Make sure we don't have division by zero, but these values may return in array[0] next hour */
 #if DEBUG > 1
 	fprintf( stderr, "Calculating averages: \t" );
 #endif	

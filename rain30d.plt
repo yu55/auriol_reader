@@ -22,5 +22,5 @@ set y2tics
 set xrange ["`date --date='30 days ago' +%Y-%m-%d`":"`date +%Y-%m-%d`"]
 set x2range ["`date --date='30 days ago' +%Y-%m-%d`":"`date +%Y-%m-%d`"]
 
-plot "< sqlite3 database.sl3  \"SELECT strftime('%Y-%m-%d', created) AS day,  MAX(amount)-MIN(amount) FROM pluviometer WHERE created > datetime('now','localtime','-30 day') GROUP BY day\"" using 1:2 with boxes lc rgb "blue"
+plot "< sqlite3 /var/local/auriol-db.sl3  \"SELECT strftime('%Y-%m-%d', created) AS day,  MAX(amount)-MIN(amount) FROM pluviometer WHERE created > datetime('now','localtime','-30 day') GROUP BY day\"" using 1:2 with boxes lc rgb "blue"
 

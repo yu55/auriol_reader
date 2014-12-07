@@ -10,6 +10,7 @@
 
 /* #define ARRAY_SIZE 4800000 */
 #define DEBUG 0
+#define RECIEVE_PIN 2
 #define SYNCHRO_LENGTH 178    /*  9 ms */
 #define SEPARATOR_LENGTH 9    /*  1 ms */
 #define ZERO_LENGTH 38        /*  2 ms */
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
 /*    while(globalLevelsCounter < ARRAY_SIZE) */
     while(1)
     {
-        int level = digitalRead(2);
+        int level = digitalRead( RECIEVE_PIN );
 /*        unsigned char level = readLevel(); */
 
         int bitLength = findEncodedBitLength(level);
