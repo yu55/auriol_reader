@@ -23,7 +23,7 @@ static const char LANG_DB_TEMP_QUERY[] = "\nERROR in Temperature query: SQLite r
 static const char LANG_DB_TEMP_DIFF[] = "\nWARNING: Temperature difference out of bonds (%f to %f). Data will NOT be saved!\n";
 static const char LANG_DB_CREATE_TBL[] = "ERROR: Could not create database table! Error Msg: %s.\n%s\n";
 static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
-static const char LANG_DB_WIND_QUERY[] = "\nERROR in Wind query: SQLite returned Error Code: %i.\n";
+static const char LANG_DB_WIND_QUERY[] = "\nERROR in Wind query: SQLite returned Error Code: %i.\n\"%s\"\n";
 
 #else
 static const char LANG_DB_ERROR_OPENING[] = "Can not open database. Dying. Bye bye.";
@@ -32,7 +32,7 @@ static const char LANG_DB_TEMP_QUERY[] = "\nSomething went wrong when inserting 
 static const char LANG_DB_TEMP_DIFF[] = "\nWARNING! Temp jump from %f to %f too big. Temp won't be recorded!\n";
 static const char LANG_DB_CREATE_TBL[] = "ERROR: Could not create database table! Error Msg: %s.\n%s\n";
 static const char LANG_DB_HUMID_DIFF[] = "\nWARNING: Humidity value out of bonds (%i %%). Data will NOT be saved!\n";
-static const char LANG_DB_WIND_QUERY[] = "\nERROR in Wind query: SQLite returned Error Code: %i.\n";
+static const char LANG_DB_WIND_QUERY[] = "\nERROR in Wind query: SQLite returned Error Code: %i.\n\"%s\"\n";
 #endif
 
 static const char * SQL_CREATE_TABLE[] =  {
@@ -154,10 +154,10 @@ void saveHumidity(unsigned int humidity) {
 void saveWind(float speed, float gust, unsigned int dir ) {
 	static time_t     temp_time  = 0;
 	static signed int old_hour   = -1;
-	static signed int counter    = -1;
-	static float      windSpeed[WIND_SAMPLES];
-	static float      windGust[WIND_SAMPLES];
-	static int        windDir[WIND_SAMPLES];
+	static signed int counter    = 0;
+	static float      windSpeed[WIND_SAMPLES] = { -1.0 };
+	static float      windGust[WIND_SAMPLES]  = { -1.0 };
+	static int        windDir[WIND_SAMPLES]   = { -1 };
 	
 	float x, y, rad;
 	unsigned int i;
@@ -165,12 +165,9 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 	time( &t );
 	local = localtime(&t);
 	
-	/* Check timestamp on previous reading. Discard old incomplete data */
-	if ( difftime( t, temp_time ) > 2.0 ) {
-		/* First pass */
-		if ( counter < 0 )
-			counter = 0;
-		else if ( windSpeed[counter] > -1.0 && windGust[counter] > -1.0 )
+	/* Check a new reading (aprox. every 30s). Discard incomplete data */
+	if ( difftime( t, temp_time ) > 20.0 ) {
+		if ( windSpeed[counter] > -1.0 && windGust[counter] > -1.0 )
 			counter++;
 		i = counter % WIND_SAMPLES;
 		windSpeed[i] = -1.0;
@@ -187,7 +184,8 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 		windGust[i]  = gust;
 		windDir[i]   = dir;
 	}
-	fprintf( stderr, "%i: Speed: %.1f\tGust: %.1f\tDir: %i\n", i, windSpeed[i], windGust[i], windDir[i] );
+	fprintf( stderr, "[%02i:%02i:%02i] %i: Speed: %.1f\tGust: %.1f\tDir: %i\n", local->tm_hour,
+		local->tm_min, local->tm_sec, i, windSpeed[i], windGust[i], windDir[i] );
 	
 	/* Return if only one value available or less than an hour passed */
 	if ( old_hour == local->tm_hour || windSpeed[i] < 0.0 || windGust[i] < 0.0 )
@@ -196,7 +194,8 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 	/* Calculating averages 
 	 * Wind dir from http://www.control.com/thread/1026210133
 	 * By M.A.Saghafi on 11 October, 2010 - 8:26 am and M Barnes on 18 May, 2011 - 6:48 am */ 
-	for ( i = 0; i < ++counter; i++ ) {
+	++counter;
+	for ( i = 0; i < counter; i++ ) {
 		dir = i % WIND_SAMPLES;
 		rad = M_PI / 180 * windDir[dir];
 		x  += -windSpeed[dir] * sin( rad );
@@ -208,7 +207,7 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 		windGust[dir]  = -1.0;
 		windDir[dir]   = -1;
 	}
-	
+
 	speed = speed / counter;
 	x = x / counter;
 	y = y / counter;
@@ -221,15 +220,15 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 		dir = 90  - 180 / M_PI * atan( y/x );
 	dir = dir % 360;
 	
-	char query[80] = " ";
+	char query[128] = " ";
 	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", speed, gust, dir );
 	error = sqlite3_exec(conn, query, 0, 0, 0);
 
 	if (error != SQLITE_OK) {
-		fprintf( stderr, LANG_DB_WIND_QUERY, error);
+		fprintf( stderr, LANG_DB_WIND_QUERY, error, query );
 		exit(7);
 	}
 	
 	old_hour = local->tm_hour;
-	counter  = -1;
+	counter  = 0;
 }
