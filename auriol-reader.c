@@ -9,6 +9,7 @@
 #include "db.h"
 
 /* #define ARRAY_SIZE 4800000 */
+#define DEBUG 0
 #define SYNCHRO_LENGTH 178    /*  9 ms */
 #define SEPARATOR_LENGTH 9    /*  1 ms */
 #define ZERO_LENGTH 38        /*  2 ms */
@@ -207,7 +208,7 @@ void decodeBitLength(int length) {
 void printArray() {
 	if (encodedBitsIndex == 0)
 		return;
-
+#if DEBUG > 1
 	int i;
 	struct tm *local;
 	time_t t = time(NULL);
@@ -219,6 +220,7 @@ void printArray() {
 	for (i=0; i<36; i++)
 		fprintf(stderr, "%i", encodedBits[i]);
 	fprintf(stderr, "\n");
+#endif	
 }
 
 void decodeArray() {

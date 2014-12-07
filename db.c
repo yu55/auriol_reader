@@ -48,6 +48,9 @@ struct tm *local;
 time_t t;
 
 void initializeDatabase() {
+#if DEBUG > 2
+	fprintf( stderr, "%s function initializeDatabase()\n", __FILE__ );
+#endif
 	char *errMsg = 0;
 	int i;
 	/* Open database */
@@ -55,10 +58,17 @@ void initializeDatabase() {
     if (error) {
          fprintf( stderr, LANG_DB_ERROR_OPENING );
          exit(3);
+#if DEBUG > 2
+	} else {
+		fprintf( stderr, "sqlite3_open( \"%s\" ) [exit: %i]\n", DB_FILENAME, error );
+#endif
     }
     /* Create database tables, if not exits */
     for ( i=0; i<4; i++ ) {
 		error = sqlite3_exec(conn, SQL_CREATE_TABLE[i], 0, 0, &errMsg);
+#if DEBUG > 2
+		fprintf( stderr, "SQL: %s [exit: %i]\n", SQL_CREATE_TABLE[i], error );
+#endif
 		if (error != SQLITE_OK) {
 			fprintf( stderr, LANG_DB_CREATE_TBL, errMsg, SQL_CREATE_TABLE[i] );
 			exit(4);
@@ -67,6 +77,9 @@ void initializeDatabase() {
 }
 
 void savePluviometer(float amount) {
+#if DEBUG > 2
+	fprintf( stderr, "%s savePluviometer(float amount=%f)\n", __FILE__, amount );
+#endif
 	static signed int old_hour  = -1;
 	static float      old_value = -FLT_MAX;
 
@@ -78,6 +91,9 @@ void savePluviometer(float amount) {
         char query[1024] = " ";
         sprintf(query, "INSERT INTO pluviometer VALUES (datetime('now', 'localtime'), %.2f);", amount);
         error = sqlite3_exec(conn, query, 0, 0, 0);
+#if DEBUG > 2
+		fprintf( stderr, "SQL: %s [exit: %i]\n", query, error );
+#endif
         if (error != SQLITE_OK) {
             fprintf( stderr, LANG_DB_PLUVIOMETER_QUERY, error);
             exit(5);
@@ -89,6 +105,9 @@ void savePluviometer(float amount) {
 }
 
 void saveTemperature(float temperature) {
+#if DEBUG > 2
+	fprintf( stderr, "%s saveTemperature(float temperature=%f)\n", __FILE__, temperature );
+#endif
 	static signed int old_hour = -1;
 	static float old_value     = -FLT_MAX;
 
@@ -109,11 +128,18 @@ void saveTemperature(float temperature) {
         char query[1024] = " ";
         sprintf(query, "INSERT INTO temperature VALUES (datetime('now', 'localtime'), %.1f);", temperature);
         error = sqlite3_exec(conn, query, 0, 0, 0);
+#if DEBUG > 2
+		fprintf( stderr, "SQL: %s [exit: %i]\n", query, error );
+#endif
 
         if (error != SQLITE_OK) {
             fprintf( stderr, LANG_DB_TEMP_QUERY, error);
             exit(6);
         }
+#if DEBUG > 2
+	} else {
+		fprintf( stderr, "Old temp:%f New temp:%f Old hr:%i Now hr:%i\n", old_value, temperature, old_hour, local->tm_hour );
+#endif
     }
 
     old_hour = local->tm_hour;
@@ -121,6 +147,9 @@ void saveTemperature(float temperature) {
 }
 
 void saveHumidity(unsigned int humidity) {
+#if DEBUG > 2
+	fprintf( stderr, "%s saveHumidity(unsigned int humidity=%f)\n", __FILE__, humidity );
+#endif
 	static signed int old_hour = -1;
 	static float old_value     = -FLT_MAX;
 
@@ -140,11 +169,18 @@ void saveHumidity(unsigned int humidity) {
         char query[1024] = " ";
         sprintf(query, "INSERT INTO humidity VALUES (datetime('now', 'localtime'), %i);", humidity);
         error = sqlite3_exec(conn, query, 0, 0, 0);
+#if DEBUG > 2
+		fprintf( stderr, "SQL: %s [exit: %i]\n", query, error );
+#endif
 
         if (error != SQLITE_OK) {
             fprintf( stderr, LANG_DB_PLUVIOMETER_QUERY, error);
             exit(7);
         }
+#if DEBUG > 2
+	} else {
+		fprintf( stderr, "Old temp:%f New temp:%f Old hr:%i Now hr:%i\n", old_value, temperature, old_hour, local->tm_hour );
+#endif
     }
 
     old_hour  = local->tm_hour;
@@ -152,6 +188,9 @@ void saveHumidity(unsigned int humidity) {
 }
 
 void saveWind(float speed, float gust, unsigned int dir ) {
+#if DEBUG > 2
+	fprintf( stderr, "%s function saveWind( float speed=%f, float gust=%f, int dir=%i )\n", __FILE__, speed, gust, dir );
+#endif
 	static time_t     temp_time  = 0;
 	static signed int old_hour   = -1;
 	static signed int counter    = 0;
@@ -184,9 +223,10 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 		windGust[i]  = gust;
 		windDir[i]   = dir;
 	}
+#if DEBUG > 1
 	fprintf( stderr, "[%02i:%02i:%02i] %i: Speed: %.1f\tGust: %.1f\tDir: %i\n", local->tm_hour,
 		local->tm_min, local->tm_sec, i, windSpeed[i], windGust[i], windDir[i] );
-	
+#endif	
 	/* Return if only one value available or less than an hour passed */
 	if ( old_hour == local->tm_hour || windSpeed[i] < 0.0 || windGust[i] < 0.0 )
 		return;
@@ -195,7 +235,13 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 	 * Wind dir from http://www.control.com/thread/1026210133
 	 * By M.A.Saghafi on 11 October, 2010 - 8:26 am and M Barnes on 18 May, 2011 - 6:48 am */ 
 	++counter;
+#if DEBUG > 1
+	fprintf( stderr, "Calculating averages: \t" );
+#endif	
 	for ( i = 0; i < counter; i++ ) {
+#if DEBUG > 1
+		fprintf( stderr, "%i={s:%f g:%f d:%i}\t", i, windSpeed[i], windGust[i], windDir[i] );
+#endif	
 		dir = i % WIND_SAMPLES;
 		rad = M_PI / 180 * windDir[dir];
 		x  += -windSpeed[dir] * sin( rad );
@@ -219,11 +265,16 @@ void saveWind(float speed, float gust, unsigned int dir ) {
 	else
 		dir = 90  - 180 / M_PI * atan( y/x );
 	dir = dir % 360;
+#if DEBUG > 1
+	fprintf( stderr, "\nAverage={s:%f g:%f d:%i}\n", speed, gust, dir );
+#endif	
 	
 	char query[128] = " ";
 	sprintf(query, "INSERT INTO wind VALUES (datetime('now', 'localtime'), %.1f, %.1f, %i);", speed, gust, dir );
 	error = sqlite3_exec(conn, query, 0, 0, 0);
-
+#if DEBUG > 2
+	fprintf( stderr, "SQL: %s [exit: %i]\n", query, error );
+#endif
 	if (error != SQLITE_OK) {
 		fprintf( stderr, LANG_DB_WIND_QUERY, error, query );
 		exit(7);
