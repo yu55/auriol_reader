@@ -12,7 +12,7 @@
 <body>
 <h2>Sportowa8 Meteo (stacja pogody AURIOL H13726)</h2>
 <?php
-$db = new SQLite3('database.sl3');
+$db = new SQLite3('/var/local/auriol-db.sl3');
 
 echo "<table>";
 echo "<col width=\"425\">";

@@ -9,25 +9,28 @@
 #include "db.h"
 
 /* #define ARRAY_SIZE 4800000 */
-#define SYNCHRO_LENGTH 178
-#define SEPARATOR_LENGTH 9
-#define ZERO_LENGTH 38
-#define ONE_LENGTH 78
-#define LENGTHS_MARGIN 5
+#define DEBUG 0
+#define RECIEVE_PIN 2
+#define SYNCHRO_LENGTH 178    /*  9 ms */
+#define SEPARATOR_LENGTH 9    /*  1 ms */
+#define ZERO_LENGTH 38        /*  2 ms */
+#define ONE_LENGTH 78         /*  4 ms */
+#define LENGTHS_MARGIN 5      /* .5 ms */
 
 #ifdef LANGUAGE_ENGLISH
 static const char LANG_PROGRAM_TITLE[] = "433 MHz Wireless Weather Station Decoder running on Raspberry Pi.\n";
 static const char LANG_BATTERY_OK[] = "        Battery: OK\n";
-static const char LANG_BATTERY_REPLACE[] = "        Battery: Need replacing (<2.6V)\n";
-static const char LANG_TRANS_FILE_OPEN_ERR[] = "Error: Could not open transmission data file!";
+static const char LANG_BATTERY_REPLACE[] = "        Battery: Replace (<2.6V)!\n";
+static const char LANG_TRANS_FILE_OPEN_ERR[] = "ERROR: Could not open transmission data file!";
 static const char LANG_TRANS_FILE_END[] = "End of transmission data.";
 static const char LANG_INFO_PLUVIOMETER[] = "Rain: %.2f mm";
 static const char LANG_INFO_WIND_AVG[] = "Wind Speed: %.1f m/s";
 static const char LANG_INFO_WIND_DIR_GUST[] = "Wind Direction: %i deg        Wind Gust: %.1f m/s";
 static const char LANG_INFO_TEMP_HUMIDITY[] = "Temperature: %.1f C        Humidity: %i %%";
-static const char LANG_INFO_CRC_DIFFER[] = "ReceivedChecksum=%02x CalculatedChecksum=%02x Equal=%d\n";
-static const char LANG_WARNING_CRC[] = "WARNING! Checksum failed. Data will NOT be saved\n";
+static const char LANG_INFO_CRC_DIFFER[] = "ReceivedChecksum: %02x CalculatedChecksum: %02x Equal: %d\n";
+static const char LANG_WARNING_CRC[] = "WARNING: Checksum failed. Data will NOT be saved!\n";
 static const char LANG_DATE_TIME[] = "[%i-%02i-%02i %02i:%02i:%02i] ";
+
 #else
 static const char LANG_PROGRAM_TITLE[] = "Dekoder czujnikow bezprzewodowych 433 MHz na Raspberry Pi uruchomiony.\n";
 static const char LANG_BATTERY_OK[] = "        Bateria: OK\n";
@@ -83,7 +86,7 @@ int main(int argc, char *argv[])
 /*    while(globalLevelsCounter < ARRAY_SIZE) */
     while(1)
     {
-        int level = digitalRead(2);
+        int level = digitalRead( RECIEVE_PIN );
 /*        unsigned char level = readLevel(); */
 
         int bitLength = findEncodedBitLength(level);
@@ -117,7 +120,7 @@ int main(int argc, char *argv[])
 void openFileWithTransmissionData() {
     pFile = fopen(filename, "rt");
     if (pFile == NULL) {
-        puts(LANG_TRANS_FILE_OPEN_ERR);
+        fprintf( stderr, LANG_TRANS_FILE_OPEN_ERR );
         exit(1);
     }
 }
@@ -136,6 +139,8 @@ unsigned char readLevel() {
 /* Analyze transmission bit after bit */
 int findEncodedBitLength(unsigned char level) {
        levelsCounter++;
+	   
+	   /* Out of range */
        if (levelsCounter > SYNCHRO_LENGTH + LENGTHS_MARGIN + SEPARATOR_LENGTH + LENGTHS_MARGIN) {
            levelsCounter = 1;
            resetRecording();
@@ -170,40 +175,53 @@ void decodeBitLength(int length) {
 /*       if (length > -1) {
           printf("%i %i\n", length, globalLevelsCounter);
        }*/
+
+       /* Signal length too short */
        if (length < ZERO_LENGTH - LENGTHS_MARGIN) {
            return;
        }
+       
+       /* Sync bit - Start of data package */
        if (length > SYNCHRO_LENGTH - LENGTHS_MARGIN*2 && length < SYNCHRO_LENGTH + LENGTHS_MARGIN*2 && !recording) {
            resetRecording();
            recording = 1;
+	   
+	   /* One  */
        } else if (length > ONE_LENGTH - LENGTHS_MARGIN && length < ONE_LENGTH + LENGTHS_MARGIN && recording) {
            encodedBits[encodedBitsIndex++] = 1;
+       
+	   /* Zero */
        } else if (length > ZERO_LENGTH - LENGTHS_MARGIN && length < ZERO_LENGTH + LENGTHS_MARGIN && recording) {
            encodedBits[encodedBitsIndex++] = 0;
+	    
+	   /* Sync bit - End of data package */
        } else if (length > SYNCHRO_LENGTH - LENGTHS_MARGIN*2 && length < SYNCHRO_LENGTH + LENGTHS_MARGIN*2 && recording) {
            decodeArray();
            resetRecording();
            recording = 1;
+	   
+       /* Signal length too long */
        } else if (recording) {
            resetRecording();
        }
 }
 
 void printArray() {
-   if (encodedBitsIndex == 0) {
-        return;
-   }
-
-   printTime();
-
-   int i = 0;
-   for (i=0; i<36; i++) {
-       printf("%i", encodedBits[i]);
-   }
-   printf("\n");
-   /*
-   printf(" globalLevelsCounter=%i\n", globalLevelsCounter);
-   */
+	if (encodedBitsIndex == 0)
+		return;
+#if DEBUG > 1
+	int i;
+	struct tm *local;
+	time_t t = time(NULL);
+	local = localtime(&t);
+	
+	fprintf(stderr, LANG_DATE_TIME, (local->tm_year + 1900), (local->tm_mon) + 1, local->tm_mday, local->tm_hour,
+		local->tm_min, local->tm_sec);
+	
+	for (i=0; i<36; i++)
+		fprintf(stderr, "%i", encodedBits[i]);
+	fprintf(stderr, "\n");
+#endif	
 }
 
 void decodeArray() {
@@ -254,13 +272,15 @@ void decodeWindData() {
         } else {
            printf(LANG_BATTERY_OK);
         }
+        
+        saveWind( (float)windAverageSpeed/5, -1.0, -1 );
     
     /* Wind gust & direction */
     } else if (encodedBits[9] && encodedBits[10] && encodedBits[12] && encodedBits[13] && encodedBits[14]) {
         unsigned int direction = 0;
         unsigned int windGust = 0;
         int i;
-        for (i=15; i<23; i++) {
+        for (i=15; i<24; i++) {
            direction |= encodedBits[i] << (i - 15);
         }
         for (i=24; i<32; i++) {
@@ -276,6 +296,8 @@ void decodeWindData() {
            printf(LANG_BATTERY_OK);
         }
     
+        saveWind( -1.0, (float)windGust/5, direction );
+		
     /* Temperature & Humidity */
     } else if (!encodedBits[9] || !encodedBits[10]) {
         int temperature = 0;
@@ -313,7 +335,7 @@ void decodeWindData() {
             saveTemperature(temperatureFinal);
 			saveHumidity(humidity);
         } else {
-            printf(LANG_WARNING_CRC);
+            fprintf( stderr, LANG_WARNING_CRC);
         }
     }
 }
@@ -345,7 +367,7 @@ bool combinedSensorChecksumConfirmed() {
 
     if (!checksumsAreEqual) {
         printTime();
-        printf(LANG_INFO_CRC_DIFFER, readedChecksum, computedChecksum, checksumsAreEqual);
+        fprintf( stderr, LANG_INFO_CRC_DIFFER, readedChecksum, computedChecksum, checksumsAreEqual);
     }
 
     return checksumsAreEqual;
