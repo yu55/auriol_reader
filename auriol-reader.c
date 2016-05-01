@@ -11,11 +11,14 @@
 /* #define ARRAY_SIZE 4800000 */
 #define DEBUG 0
 #define RECIEVE_PIN 2
-#define SYNCHRO_LENGTH 178    /*  9 ms */
-#define SEPARATOR_LENGTH 9    /*  1 ms */
-#define ZERO_LENGTH 38        /*  2 ms */
-#define ONE_LENGTH 78         /*  4 ms */
-#define LENGTHS_MARGIN 5      /* .5 ms */
+
+                              /* Below values are experimental and depend on how fast particular Raspberry Pi is */
+                              /* Example values used in this code work on Pi Model B Revision 2.0 (000e) */
+#define SYNCHRO_LENGTH 168    /*    168;  9 ms */
+#define SEPARATOR_LENGTH 8    /*   8..9;  1 ms */
+#define ZERO_LENGTH 38        /*     38;  2 ms */
+#define ONE_LENGTH 76         /* 76..78;  4 ms */
+#define LENGTHS_MARGIN 7      /*   5..7; .5 ms */
 
 #ifdef LANGUAGE_ENGLISH
 static const char LANG_PROGRAM_TITLE[] = "433 MHz Wireless Weather Station Decoder running on Raspberry Pi.\n";
