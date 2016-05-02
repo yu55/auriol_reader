@@ -8,7 +8,6 @@
 #include <wiringPi.h>
 #include "db.h"
 
-/* #define ARRAY_SIZE 4800000 */
 #define DEBUG 0
 #define RECIEVE_PIN 2
 
@@ -97,43 +96,21 @@ int main(int argc, char *argv[])
 
     initializeDatabase();
 
-/*    unsigned char levels[ARRAY_SIZE]; */
-
     wiringPiSetup();
-    /* openFileWithTransmissionData(); */
 
     printTime();
     printf(LANG_PROGRAM_TITLE);
 
-/*    while(globalLevelsCounter < ARRAY_SIZE) */
     while (1) {
 	int level = digitalRead(RECIEVE_PIN);
-/*        unsigned char level = readLevel(); */
 
 	int bitLength = findEncodedBitLength(level);
-/*
-        if (bitLength != -1) {
-            printf("%i   %i\n", bitLength, count);
-        }
-*/
 	decodeBitLength(bitLength);
-
-/*        levels[globalLevelsCounter] = level; */
 
 	delayMicroseconds(50);
 
 	globalLevelsCounter++;
     }
-/*
-    count = 0;
-
-    while(globalLevelsCounter < ARRAY_SIZE)
-    {
-        printf("%i", levels[globalLevelsCounter]);
-
-        count++;
-    }
-*/
     return 0;
 }
 
@@ -192,8 +169,6 @@ int findEncodedBitLength(unsigned char level)
 
 void resetRecording()
 {
-    /*printArray(); */
-
     recording = 0;
     memset(encodedBits, 2, sizeof(encodedBits[0]) * 36);
     encodedBitsIndex = 0;
@@ -201,10 +176,6 @@ void resetRecording()
 
 void decodeBitLength(int length)
 {
-/*       if (length > -1) {
-          printf("%i %i\n", length, globalLevelsCounter);
-       }*/
-
     /* Signal length too short */
     if (length < ZERO_LENGTH - LENGTHS_MARGIN) {
 	return;
@@ -395,13 +366,7 @@ bool combinedSensorChecksumConfirmed()
 	for (j = 0; j < 4; j++) {
 	    nibble |= encodedBits[i + j] << (j);
 	}
-/*
-        printf("%02x (%d) - %02x (%d) = ", computedChecksum, computedChecksum, nibble, nibble);
-*/
 	computedChecksum -= nibble;
-/*
-        printf("%02x (%d)\n", computedChecksum, computedChecksum);
-*/
     }
     computedChecksum &= 0x0F;
 
