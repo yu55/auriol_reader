@@ -64,7 +64,6 @@ static const char LANG_WARNING_CRC[] =
 static const char LANG_DATE_TIME[] = "[%i-%02i-%02i %02i:%02i:%02i] ";
 #endif
 
-void openFileWithTransmissionData();
 unsigned char readLevel();
 int findEncodedBitLength(unsigned char level);
 void resetRecording();
@@ -76,7 +75,6 @@ void decodeWindData();
 bool combinedSensorChecksumConfirmed();
 void printTime();
 
-char *filename;
 FILE *pFile = NULL;
 int globalLevelsCounter = 0;
 int levelsCounter = 0;
@@ -92,8 +90,6 @@ unsigned char encodedBitsIndex = 0;
 
 int main(int argc, char *argv[])
 {
-    filename = argv[1];
-
     initializeDatabase();
 
     wiringPiSetup();
@@ -112,16 +108,6 @@ int main(int argc, char *argv[])
 	globalLevelsCounter++;
     }
     return 0;
-}
-
-/* Open file with transmission data */
-void openFileWithTransmissionData()
-{
-    pFile = fopen(filename, "rt");
-    if (pFile == NULL) {
-	fprintf(stderr, LANG_TRANS_FILE_OPEN_ERR);
-	exit(1);
-    }
 }
 
 /* Read GPIO level */
