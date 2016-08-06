@@ -73,24 +73,24 @@ void initializeDatabase()
     /* Open database */
     error = sqlite3_open(DB_FILENAME, &conn);
     if (error) {
-    	fprintf(stderr, LANG_DB_ERROR_OPENING);
-	    exit(3);
+	fprintf(stderr, LANG_DB_ERROR_OPENING);
+	exit(3);
     }
     /* Create database tables and indices, if not exits */
     for (i = 0; i < 4; i++) {
-	    error = sqlite3_exec(conn, SQL_CREATE_TABLE[i], 0, 0, &errMsg);
-	    if (error != SQLITE_OK) {
-	        fprintf(stderr, LANG_DB_CREATE_TBL, errMsg,
-		        SQL_CREATE_TABLE[i]);
-	        exit(4);
-	    }
+	error = sqlite3_exec(conn, SQL_CREATE_TABLE[i], 0, 0, &errMsg);
+	if (error != SQLITE_OK) {
+	    fprintf(stderr, LANG_DB_CREATE_TBL, errMsg,
+		    SQL_CREATE_TABLE[i]);
+	    exit(4);
+	}
 
-	    error = sqlite3_exec(conn, SQL_CREATE_INDEX[i], 0, 0, &errMsg);
-	    if (error != SQLITE_OK) {
-	        fprintf(stderr, LANG_DB_CREATE_TBL, errMsg,
-		        SQL_CREATE_INDEX[i]);
-	        exit(4);
-	    }
+	error = sqlite3_exec(conn, SQL_CREATE_INDEX[i], 0, 0, &errMsg);
+	if (error != SQLITE_OK) {
+	    fprintf(stderr, LANG_DB_CREATE_TBL, errMsg,
+		    SQL_CREATE_INDEX[i]);
+	    exit(4);
+	}
     }
 }
 
@@ -130,24 +130,24 @@ void saveTemperature(float temperature)
     /* Store if value has changed or not from same minute */
     if (t_old_min != local->tm_min || old_value != temperature) {
 
-    	/* Check for invalid values */
-	    float difference = old_value - temperature;
-    	if ((difference < -TEMP_DIFF || difference > TEMP_DIFF)
-    	    && old_value != -FLT_MAX) {
-    	    printf(LANG_DB_TEMP_DIFF, old_value, temperature);
-    	    return;
-    	}
+	/* Check for invalid values */
+	float difference = old_value - temperature;
+	if ((difference < -TEMP_DIFF || difference > TEMP_DIFF)
+	    && old_value != -FLT_MAX) {
+	    printf(LANG_DB_TEMP_DIFF, old_value, temperature);
+	    return;
+	}
 
-    	char query[1024] = " ";
-    	sprintf(query,
-    		"INSERT INTO temperature VALUES (datetime('now', 'localtime'), %.1f);",
-    		temperature);
-    	error = sqlite3_exec(conn, query, 0, 0, 0);
+	char query[1024] = " ";
+	sprintf(query,
+		"INSERT INTO temperature VALUES (datetime('now', 'localtime'), %.1f);",
+		temperature);
+	error = sqlite3_exec(conn, query, 0, 0, 0);
 
-    	if (error != SQLITE_OK) {
-    	    fprintf(stderr, LANG_DB_TEMP_QUERY, error);
-    	    exit(6);
-    	}
+	if (error != SQLITE_OK) {
+	    fprintf(stderr, LANG_DB_TEMP_QUERY, error);
+	    exit(6);
+	}
     }
 
     t_old_min = local->tm_min;
@@ -165,22 +165,22 @@ void saveHumidity(unsigned int humidity)
     /* Store if value has changed or not from same minute */
     if (h_old_min != local->tm_min || old_value != humidity) {
 
-    	/* Check for invalid values */
-    	if (humidity <= 0 || humidity > 100) {
-    	    fprintf(stderr, LANG_DB_HUMID_DIFF, humidity);
-    	    return;
-    	}
+	/* Check for invalid values */
+	if (humidity <= 0 || humidity > 100) {
+	    fprintf(stderr, LANG_DB_HUMID_DIFF, humidity);
+	    return;
+	}
 
-    	char query[1024] = " ";
-    	sprintf(query,
-    		"INSERT INTO humidity VALUES (datetime('now', 'localtime'), %i);",
-    		humidity);
-    	error = sqlite3_exec(conn, query, 0, 0, 0);
+	char query[1024] = " ";
+	sprintf(query,
+		"INSERT INTO humidity VALUES (datetime('now', 'localtime'), %i);",
+		humidity);
+	error = sqlite3_exec(conn, query, 0, 0, 0);
 
-    	if (error != SQLITE_OK) {
-    	    fprintf(stderr, LANG_DB_PLUVIOMETER_QUERY, error);
-    	    exit(7);
-    	}
+	if (error != SQLITE_OK) {
+	    fprintf(stderr, LANG_DB_PLUVIOMETER_QUERY, error);
+	    exit(7);
+	}
     }
 
     h_old_min = local->tm_min;
