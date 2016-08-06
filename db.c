@@ -53,6 +53,14 @@ static const char *SQL_CREATE_TABLE[] = {
     "CREATE TABLE IF NOT EXISTS wind( created DATETIME, speed DECIMAL(3,1), gust DECIMAL(3,1), direction SMALLINT );"
 };
 
+static const char *SQL_CREATE_INDEX[] = {
+    "CREATE INDEX IF NOT EXISTS ix_pluviometer_created ON pluviometer(created);",
+    "CREATE INDEX IF NOT EXISTS ix_temperature_created ON temperature(created);",
+    "CREATE INDEX IF NOT EXISTS ix_humidity_created ON humidity(created);",
+    "CREATE INDEX IF NOT EXISTS ix_wind_created ON wind(created);"
+};
+
+
 sqlite3 *conn;
 int error = 0;
 struct tm *local;
@@ -65,17 +73,24 @@ void initializeDatabase()
     /* Open database */
     error = sqlite3_open(DB_FILENAME, &conn);
     if (error) {
-	fprintf(stderr, LANG_DB_ERROR_OPENING);
-	exit(3);
+    	fprintf(stderr, LANG_DB_ERROR_OPENING);
+	    exit(3);
     }
-    /* Create database tables, if not exits */
+    /* Create database tables and indices, if not exits */
     for (i = 0; i < 4; i++) {
-	error = sqlite3_exec(conn, SQL_CREATE_TABLE[i], 0, 0, &errMsg);
-	if (error != SQLITE_OK) {
-	    fprintf(stderr, LANG_DB_CREATE_TBL, errMsg,
-		    SQL_CREATE_TABLE[i]);
-	    exit(4);
-	}
+	    error = sqlite3_exec(conn, SQL_CREATE_TABLE[i], 0, 0, &errMsg);
+	    if (error != SQLITE_OK) {
+	        fprintf(stderr, LANG_DB_CREATE_TBL, errMsg,
+		        SQL_CREATE_TABLE[i]);
+	        exit(4);
+	    }
+
+	    error = sqlite3_exec(conn, SQL_CREATE_INDEX[i], 0, 0, &errMsg);
+	    if (error != SQLITE_OK) {
+	        fprintf(stderr, LANG_DB_CREATE_TBL, errMsg,
+		        SQL_CREATE_INDEX[i]);
+	        exit(4);
+	    }
     }
 }
 
