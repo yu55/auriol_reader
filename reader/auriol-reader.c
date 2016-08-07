@@ -12,7 +12,8 @@
 #define RECIEVE_PIN 2
 
 			      /* Below values are experimental and depend on how fast particular Raspberry Pi is */
-			      /* Example values used in this code work on Pi Model B Revision 2.0 (000e) */
+                  /* Below values define how many polled "1" from receiver hardware mean given logical signal */
+			      /* Values used in this code work on Pi Model B Revision 2.0 (000e) without running other heavy CPU processes */
 #define SYNCHRO_LENGTH 168	/*    168;  9 ms */
 #define SEPARATOR_LENGTH 8	/*   8..9;  1 ms */
 #define ZERO_LENGTH 38		/*     38;  2 ms */
