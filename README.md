@@ -1,6 +1,8 @@
 # auriol-reader
 This repository contains AURIOL H13726 / Ventus W155 weather stations radio transmissions decoder application for Raspberry Pi. Application obtains data through a 433.92 MHz RF wireless receiver module (AUREL RX-4MM5++/F, simple chinese XY-MK-5V or other similar) connected to GPIO pin, decodes this data, prints it to `stdout` and saves in SQLite database.
 
+![auriol-reader-screenshot.png](auriol-reader-screenshot.png?raw=true "View of data received from AURIOL H13726 weather station via auriol-reader")
+
 ## Repository layout
 * `doc` - additional documentation
 * `reader` - decoder application
