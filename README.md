@@ -11,7 +11,7 @@ This repository contains AURIOL H13726 / Ventus W155 weather stations radio tran
 
 ## Installation
 * This project uses Wiring Pi library (http://wiringpi.com/) so it should be installed first.
-* Secondly the `sqlite3` package is required.
+* Secondly the `libsqlite3-dev` package is required.
 * Clone this repository, `cd` into `reader` directory, execute `make` and project should compile.
 
 ## Running
